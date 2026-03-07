@@ -1,11 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from '@/layouts/AdminLayout';
-import ProductsPage from '@/pages/admin/ProductsPage'; // Sayfayı içeri al
-import { Toaster } from "@/components/ui/toaster"
+import ProductsPage from '@/pages/admin/ProductsPage';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 function App() {
   return (
     <>
-      <Toaster />
       <Router>
         <Routes>
           <Route path="/" element={<Navigate to="/admin" replace />} />
@@ -18,7 +18,21 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        toastStyle={{ fontSize: "13px", fontFamily: "Inter, sans-serif" }}
+      />
     </>
+
   );
 }
 

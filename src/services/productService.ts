@@ -21,4 +21,21 @@ export const productService = {
         const response = await api.get<Product>(`/Products/${id}?lang=${lang}`);
         return response.data;
     },
+    update: async (id: number, data: any): Promise<void> => {
+        await api.put(`/Products/${id}`, { ...data, id });
+    },
+    exportToExcel: async (lang: string = "tr"): Promise<void> => {
+        const response = await api.get(`/Products/export?lang=${lang}`, {
+            responseType: 'blob'
+        });
+
+        // Tarayıcıda indirme tetikleme
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Urunler_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
 };

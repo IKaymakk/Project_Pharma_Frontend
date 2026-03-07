@@ -3,8 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createProductSchema, type ProductFormValues } from "@/schemas/productSchema";
 import { productService } from "@/services/productService";
-import { useToast } from "@/hooks/use-toast";
-import {
+import { toast } from "react-toastify"; import {
     Dialog, DialogContent, DialogHeader, DialogTitle
 } from "@/components/ui/dialog";
 import {
@@ -17,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Pencil, Save, Globe } from "lucide-react";
 import { lookUpService } from "@/services/lookUpService";
 
+
 interface Props {
     productId: number | null;
     open: boolean;
@@ -25,7 +25,6 @@ interface Props {
 }
 
 export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: Props) {
-    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
 
     // --- DÜZELTME: State'leri Fonksiyonun İÇİNE aldık ---
@@ -71,7 +70,7 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
                     });
 
                 } catch (error) {
-                    toast({ title: "Hata", description: "Veriler güncellenemedi.", variant: "destructive" });
+                    toast.error("Veriler Yüklenemedi", { position: "top-right" })
                 } finally {
                     setLoading(false);
                 }
@@ -81,8 +80,45 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
     }, [open, productId, currentLang, form, toast]); // Dependency array eksiksiz
 
     const onSubmit = async (values: ProductFormValues) => {
-        console.log("Güncellenecek:", values);
-        toast({ title: "Test", description: "Veriler loga basıldı (Henüz kaydetmiyor)." });
+        if (!productId) return; // Güvenlik önlemi
+
+        try {
+            // Butonu 'Loading' moduna alabilirsin (form.formState.isSubmitting ile)
+
+            // Backend'in beklediği DTO formatına çevir
+            const updateDto = {
+                id: productId, // DTO için ID şart
+                languageCode: currentLang, // Şu an seçili olan dil (tr/en/de)
+
+                // Ana Tablo (Global)
+                categoryId: Number(values.categoryId),
+                dosageFormId: values.dosageFormId ? Number(values.dosageFormId) : null,
+                specification: values.specification,
+                imageUrl: values.imageUrl || "",
+
+                // Çeviri Tablosu (Local)
+                brandName: values.brandName,
+                genericName: values.genericName,
+                indication: values.indication || "",
+                description: values.description || ""
+            };
+
+            // Servise gönder
+            await productService.update(productId, updateDto);
+
+            toast.success("Ürün Başarıyla Güncellendi", {
+                position: "top-right",
+                autoClose: 4000,
+            });
+            onOpenChange(false); // Modalı kapat
+            onSuccess(); // Ana sayfadaki listeyi yenile (Refresh)
+
+        } catch (error) {
+            console.error(error);
+            toast.error("Güncelleme Başarısız", {
+                position: "top-right",
+            });
+        }
     };
 
     return (
@@ -114,7 +150,7 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
                                     <SelectContent>
                                         <SelectItem value="tr" className="text-xs">🇹🇷 Türkçe</SelectItem>
                                         <SelectItem value="en" className="text-xs">🇺🇸 English</SelectItem>
-                                        <SelectItem value="de" className="text-xs">🇩🇪 Deutsch</SelectItem>
+                                        <SelectItem value="ru" className="text-xs">ru CYKA</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

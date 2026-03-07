@@ -1,11 +1,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-// Şema ve Tipleri çekiyoruz
 import { createProductSchema } from "@/schemas/productSchema";
 import type { ProductFormValues } from "@/schemas/productSchema";
 import { productService } from "@/services/productService";
-import { useToast } from "@/hooks/use-toast";
-// Görsel bileşenler (Shadcn)
+import { toast } from "react-toastify";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger
 } from "@/components/ui/dialog";
@@ -17,10 +15,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus, Save } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { lookUpService } from "@/services/lookUpService";
 
 interface Props {
-    onSuccess: () => void; // Kayıt başarılı olursa listeyi yenilemek için tetiklenecek fonksiyon
+    onSuccess: () => void;
 }
 
 // 📌 BACKEND'DE BU TABLOLAR OLMADIĞI İÇİN ŞİMDİLİK ELLE YAZIYORUZ
@@ -38,9 +37,34 @@ const staticForms = [
 ];
 
 export function CreateProductDialog({ onSuccess }: Props) {
-    const [open, setOpen] = useState(false); // Modalin açık/kapalı durumu
-    const { toast } = useToast(); // Bildirim göstermek için
+    const [open, setOpen] = useState(false);
+    useEffect(() => {
+        if (open) {
+            const fetchLookups = async () => {
+                setIsLoadingLookups(true);
+                try {
+                    // Create işleminde varsayılan dil Türkçe ("tr")
+                    const [catData, formData] = await Promise.all([
+                        lookUpService.getCategories("en"),
+                        lookUpService.getDosageForms("en")
+                    ]);
+                    setCategories(catData);
+                    setDosageForms(formData);
+                } catch (error) {
+                    console.error(error);
+                    toast.error("Liste verileri yüklenemedi!", { position: "top-right" });
+                } finally {
+                    setIsLoadingLookups(false);
+                }
+            };
+            fetchLookups();
+        }
+    }, [open]);
 
+
+    const [categories, setCategories] = useState<any[]>([]);
+    const [dosageForms, setDosageForms] = useState<any[]>([]);
+    const [isLoadingLookups, setIsLoadingLookups] = useState(false);
     // 1️⃣ FORM KURULUMU: React-Hook-Form'u Zod şemasıyla bağlıyoruz.
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(createProductSchema),
@@ -77,14 +101,19 @@ export function CreateProductDialog({ onSuccess }: Props) {
             });
 
             // Başarılı olursa:
-            toast({ title: "Başarılı", description: "Ürün başarıyla oluşturuldu." });
-            setOpen(false);
+            toast.success("Kayıt Başarılı!", {
+                position: "top-right",
+                autoClose: 3000,
+            }); setOpen(false);
             form.reset();
             onSuccess();
 
         } catch (error) {
             // Hata olursa:
-            toast({ title: "Hata", description: "Backend'e bağlanırken hata oluştu.", variant: "destructive" });
+            toast.error("İşlem Başarısız! Sunucu hatası oluştu.", {
+                position: "top-right",
+                autoClose: 4000,
+            });
         }
     };
 
@@ -139,20 +168,21 @@ export function CreateProductDialog({ onSuccess }: Props) {
 
                         {/* --- SATIR 2: Kategori (Manuel Liste) & Form & Özellik --- */}
                         <div className="grid grid-cols-3 gap-4">
-                            {/* KATEGORİ SEÇİMİ */}
+                            {/* KATEGORİ (DİNAMİK) */}
                             <FormField control={form.control} name="categoryId" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Kategori</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingLookups}>
                                         <FormControl>
                                             <SelectTrigger className="h-8 text-xs bg-white border-slate-200">
-                                                <SelectValue placeholder="Seçiniz" />
+                                                <SelectValue placeholder={isLoadingLookups ? "Yükleniyor..." : "Seçiniz"} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {/* Backend olmadığı için staticCategories listesini kullanıyoruz */}
-                                            {staticCategories.map(c => (
-                                                <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+                                            {categories.map(c => (
+                                                <SelectItem key={c.id} value={c.id.toString()} className="text-xs">
+                                                    {c.name || c.Name} {/* Backend DTO uyumu */}
+                                                </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -160,19 +190,21 @@ export function CreateProductDialog({ onSuccess }: Props) {
                                 </FormItem>
                             )} />
 
-                            {/* FORM SEÇİMİ */}
+                            {/* FORM (DİNAMİK) */}
                             <FormField control={form.control} name="dosageFormId" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Form</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingLookups}>
                                         <FormControl>
                                             <SelectTrigger className="h-8 text-xs bg-white border-slate-200">
-                                                <SelectValue placeholder="Seçiniz" />
+                                                <SelectValue placeholder={isLoadingLookups ? "Yükleniyor..." : "Seçiniz"} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {staticForms.map(f => (
-                                                <SelectItem key={f.id} value={f.id} className="text-xs">{f.name}</SelectItem>
+                                            {dosageForms.map(f => (
+                                                <SelectItem key={f.id} value={f.id.toString()} className="text-xs">
+                                                    {f.name || f.Name}
+                                                </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>

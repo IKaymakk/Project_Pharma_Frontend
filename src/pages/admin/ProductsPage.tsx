@@ -11,13 +11,23 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "react-toastify";
 import { EditProductDialog } from "@/components/admin/products/EditProductDialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [search, setSearch] = useState("");
-    const { toast } = useToast();
     const [editingId, setEditingId] = useState<number | null>(null);
     const filtered = products.filter(p =>
         !search ||
@@ -26,6 +36,30 @@ export default function ProductsPage() {
         p.CategoryName?.toLowerCase().includes(search.toLowerCase())
     );
 
+    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const confirmDelete = async () => {
+        if (!deleteId) return;
+
+        setIsDeleting(true);
+        try {
+            await productService.delete(deleteId); // Backend: Soft Delete
+            toast.success("İşlem Başarılı", {
+                position: "top-right",
+                autoClose: 4000,
+            }); fetchProducts();
+        } catch (error) {
+
+            toast.error("Hata Oluştu", {
+                position: "top-right",
+                autoClose: 4000
+            });
+
+        } finally {
+            setIsDeleting(false);
+            setDeleteId(null);
+        }
+    };
     const columns: ColumnDef<Product>[] = [
         {
             id: "rowNo",
@@ -95,7 +129,9 @@ export default function ProductsPage() {
                     </Button>
                     <Button variant="ghost" size="icon"
                         className="h-6 w-6 rounded text-slate-400 hover:text-red-600 hover:bg-red-50"
-                        title="Sil">
+                        title="Sil"
+                        onClick={() => setDeleteId(row.original.Id)}
+                    >
                         <Trash2 className="h-3 w-3" />
                     </Button>
                     <Button variant="ghost" size="icon"
@@ -114,9 +150,18 @@ export default function ProductsPage() {
             const data = await productService.getAll("tr");
             setProducts(data);
         } catch {
-            toast({ title: "Hata", description: "Veriler çekilemedi.", variant: "destructive" });
+            toast.error("Veriler Yüklenemediz", { position: "top-right" });
         }
     };
+    const handleExport = async () => {
+        try {
+            await productService.exportToExcel("tr");
+            toast.success("Excel İndirildi", { position: "top-right" });
+        } catch {
+            toast.error("İndirme Başarısız", { position: "top-right" });
+        }
+    };
+
 
     useEffect(() => { fetchProducts(); }, []);
 
@@ -156,8 +201,7 @@ export default function ProductsPage() {
                         <RefreshCw className="mr-1.5 h-3 w-3" /> Yenile
                     </Button>
                     <div className="w-px h-4 bg-slate-200" />
-                    <Button variant="ghost" size="sm"
-                        className="h-7 px-2.5 text-[11px] text-green-700 hover:text-green-800 hover:bg-green-50">
+                    <Button variant="ghost" size="sm" onClick={handleExport} className="...">
                         <Download className="mr-1.5 h-3 w-3" /> Excel
                     </Button>
                     {/* Modal Bileşeni - Butonu kendi içinde barındırır */}
@@ -209,7 +253,7 @@ export default function ProductsPage() {
                     [data-erp-table] tbody tr:hover { background: #eff6ff !important; }
                     [data-erp-table] tbody tr { cursor: pointer; }
                     [data-erp-table] tbody tr td {
-                        padding: 5px 10px;
+                        padding: 1px 10px;
                         vertical-align: middle;
                     }
                     [data-erp-table] tbody tr:hover td { border-color: #bfdbfe; }
@@ -252,6 +296,30 @@ export default function ProductsPage() {
                 onOpenChange={(isOpen) => !isOpen && setEditingId(null)}
                 onSuccess={fetchProducts}
             />
+            <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+                <AlertDialogContent className="bg-white border-slate-200">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-slate-800">Ürünü silmek istediğinize emin misiniz?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-slate-500 text-xs">
+                            Bu işlem ürünü listeden kaldıracak ve pasife çekecektir.
+                            Daha sonra sistem yöneticisi tarafından geri alınabilir.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="h-8 text-xs text-slate-500 border-slate-200 hover:bg-slate-50">Vazgeç</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                confirmDelete();
+                            }}
+                            className="h-8 text-xs bg-red-600 hover:bg-red-700 text-white border-red-700"
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? "Siliniyor..." : "Evet, Sil"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
 
     );
