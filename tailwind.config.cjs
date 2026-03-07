@@ -8,8 +8,8 @@ module.exports = {
 			fontFamily: {
 				sans: ["Inter", ...defaultTheme.fontFamily.sans],
 			}, fontSize: {
-				"xs": "0.62rem",      // 11px (Çok küçük detaylar için)
-				"sm": "0.7rem",     // 12px (Eskiden 14'tü - Tablolar, butonlar burayı kullanır)
+				"xs": "0.7rem",      // 11px (Çok küçük detaylar için)
+				"sm": "0.8rem",     // 12px (Eskiden 14'tü - Tablolar, butonlar burayı kullanır)
 				"base": "0.73rem", // 13px (Eskiden 16'ydı - Ana metinler burayı kullanır)
 				"lg": "0.9rem",      // 14px (Başlıklar)
 				"xl": "1rem",        // 16px (Büyük Başlıklar)

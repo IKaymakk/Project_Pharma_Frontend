@@ -3,20 +3,22 @@ import { productService } from "@/services/productService";
 import type { Product } from "@/types/product";
 import { DataTable } from "@/components/shared/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
+import { CreateProductDialog } from "@/components/admin/products/CreateProductDialog";
 import {
     Pencil, Trash2, Plus, FileSpreadsheet, RefreshCw, Eye,
-    Search, Filter, ChevronRight, Package, Tag, Layers,
+    Search, ChevronRight, Package, Tag, Layers,
     SlidersHorizontal, Download, MoreHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { EditProductDialog } from "@/components/admin/products/EditProductDialog";
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [search, setSearch] = useState("");
     const { toast } = useToast();
-
+    const [editingId, setEditingId] = useState<number | null>(null);
     const filtered = products.filter(p =>
         !search ||
         p.BrandName?.toLowerCase().includes(search.toLowerCase()) ||
@@ -27,47 +29,29 @@ export default function ProductsPage() {
     const columns: ColumnDef<Product>[] = [
         {
             id: "rowNo",
-            header: () => <span className="text-[10px] font-semibold text-slate-400 tabular-nums">#</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 tabular-nums">#</span>,
             cell: ({ row }) => (
                 <span className="text-[10px] text-slate-400 tabular-nums select-none">{row.index + 1}</span>
             ),
             size: 32,
         },
         {
-            id: "imageUrl",
-            accessorKey: "ImageUrl",
-            header: () => <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Görsel</span>,
-            cell: ({ row }) => {
-                const url = row.getValue("ImageUrl") as string;
-                return url ? (
-                    <div className="h-7 w-7 rounded border border-slate-200 bg-white flex items-center justify-center overflow-hidden shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]">
-                        <img src={url} alt="img" className="h-full w-full object-contain" />
-                    </div>
-                ) : (
-                    <div className="h-7 w-7 rounded border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center">
-                        <Package className="h-3 w-3 text-slate-300" />
-                    </div>
-                );
-            },
-            size: 44,
-        },
-        {
             accessorKey: "BrandName",
-            header: () => <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Marka Adı</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Marka Adı</span>,
             cell: ({ row }) => (
-                <span className="font-semibold text-[11px] text-slate-800 leading-tight">{row.getValue("BrandName")}</span>
+                <span className=" text-[11px] text-slate-800 leading-tight">{row.getValue("BrandName")}</span>
             ),
         },
         {
             accessorKey: "GenericName",
-            header: () => <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Etken Madde</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Etken Madde</span>,
             cell: ({ row }) => (
                 <span className="text-[11px] text-slate-600">{row.getValue("GenericName")}</span>
             ),
         },
         {
             accessorKey: "CategoryName",
-            header: () => <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Kategori</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Kategori</span>,
             cell: ({ row }) => {
                 const val = row.getValue("CategoryName") as string;
                 return val ? (
@@ -79,14 +63,14 @@ export default function ProductsPage() {
         },
         {
             accessorKey: "DosageFormName",
-            header: () => <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Form</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Form</span>,
             cell: ({ row }) => (
                 <span className="text-[11px] text-slate-500">{row.getValue("DosageFormName") || "—"}</span>
             ),
         },
         {
             accessorKey: "Specification",
-            header: () => <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Özellik</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Özellik</span>,
             cell: ({ row }) => (
                 <span className="font-mono text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
                     {row.getValue("Specification") || "—"}
@@ -95,17 +79,18 @@ export default function ProductsPage() {
         },
         {
             id: "actions",
-            header: () => <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider sr-only">İşlem</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider sr-only">İşlem</span>,
             cell: ({ row }) => (
-                <div className="flex justify-end items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-100">
+                <div className="flex justify-end items-center gap-0.5 opacity-1 group-hover:opacity-100 transition-opacity duration-100">
                     <Button variant="ghost" size="icon"
                         className="h-6 w-6 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100"
                         title="Görüntüle">
                         <Eye className="h-3 w-3" />
                     </Button>
                     <Button variant="ghost" size="icon"
-                        className="h-6 w-6 rounded text-slate-400 hover:text-blue-700 hover:bg-blue-50"
-                        title="Düzenle">
+                        className="..."
+                        onClick={() => setEditingId(row.original.Id)}
+                    >
                         <Pencil className="h-3 w-3" />
                     </Button>
                     <Button variant="ghost" size="icon"
@@ -175,10 +160,8 @@ export default function ProductsPage() {
                         className="h-7 px-2.5 text-[11px] text-green-700 hover:text-green-800 hover:bg-green-50">
                         <Download className="mr-1.5 h-3 w-3" /> Excel
                     </Button>
-                    <Button size="sm"
-                        className="h-7 px-3 text-[11px] bg-slate-800 hover:bg-slate-900 text-white shadow-sm border border-slate-900">
-                        <Plus className="mr-1.5 h-3 w-3" /> Yeni Ürün
-                    </Button>
+                    {/* Modal Bileşeni - Butonu kendi içinde barındırır */}
+                    <CreateProductDialog onSuccess={fetchProducts} />
                 </div>
             </div>
 
@@ -263,6 +246,14 @@ export default function ProductsPage() {
                     <span>Son güncelleme: {new Date().toLocaleTimeString("tr-TR")}</span>
                 </div>
             </div>
+            <EditProductDialog
+                productId={editingId}
+                open={!!editingId}
+                onOpenChange={(isOpen) => !isOpen && setEditingId(null)}
+                onSuccess={fetchProducts}
+            />
         </div>
+
     );
+
 }

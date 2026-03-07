@@ -37,7 +37,7 @@ export default function AdminLayout() {
                         P
                     </div>
                     {!collapsed && (
-                        <span className="text-[13px] font-bold text-slate-800 tracking-tight whitespace-nowrap">
+                        <span className="text-xl font-bold text-slate-800 tracking-tight whitespace-nowrap">
                             Pharma<span className="text-slate-400 font-medium">ERP</span>
                         </span>
                     )}
@@ -48,7 +48,7 @@ export default function AdminLayout() {
                 {/* MENÜ LABEL */}
                 {!collapsed && (
                     <div className="px-3 pt-3 pb-1">
-                        <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">Navigasyon</span>
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Navigasyon</span>
                     </div>
                 )}
 
@@ -63,7 +63,7 @@ export default function AdminLayout() {
                                 to={item.href}
                                 title={collapsed ? item.name : undefined}
                                 className={cn(
-                                    "relative flex items-center gap-2.5 rounded px-2 py-1.5 text-[11px] font-medium transition-all duration-100 group select-none",
+                                    "relative flex items-center gap-2.5 rounded px-2 py-1.5 text-[12.5px] font-medium transition-all duration-100 group select-none",
                                     isActive
                                         ? "bg-slate-800 text-white shadow-sm"
                                         : "text-slate-600 hover:bg-slate-100 hover:text-slate-800",
@@ -98,7 +98,7 @@ export default function AdminLayout() {
                         onClick={() => setCollapsed(!collapsed)}
                         className={cn(
                             "w-full h-6 text-slate-400 hover:bg-white hover:text-slate-600 hover:shadow-sm transition-all",
-                            collapsed ? "justify-center px-0" : "justify-start px-2 text-[10px] gap-1.5"
+                            collapsed ? "justify-center px-0" : "justify-start px-2 text-xs gap-1.5"
                         )}
                     >
                         {collapsed
@@ -110,7 +110,7 @@ export default function AdminLayout() {
                     <Button
                         variant="ghost"
                         className={cn(
-                            "w-full h-6 text-[10px] text-red-500 hover:bg-red-50 hover:text-red-600 transition-all",
+                            "w-full h-6 text-xs text-red-500 hover:bg-red-50 hover:text-red-600 transition-all",
                             collapsed ? "justify-center px-0" : "justify-start px-2 gap-1.5"
                         )}
                     >
