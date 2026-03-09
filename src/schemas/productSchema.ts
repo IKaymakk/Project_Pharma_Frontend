@@ -6,13 +6,15 @@ export const createProductSchema = z.object({
   categoryId: z.string().min(1, "Lütfen bir kategori seçiniz"),
   dosageFormId: z.string().optional(),
 
-  specification: z.string().max(50, "Özellik alanı çok uzun"),
-  indication: z.string().optional(),
-  description: z.string().optional(),
+  specification: z.string()
+    .min(1, "Özellik alanı zorunludur")
+    .max(50, "Özellik alanı çok uzun (Max 50 karakter)"),
 
-  imageUrl: z.string()
-    .url("Geçerli bir bağlantı adresi giriniz (http://...)")
-    .or(z.literal("")),
+  indication: z.string().min(1, "Endikasyon alanı zorunludur"),
+
+  description: z.string().min(1, "Açıklama alanı zorunludur"),
+
+  imageUrl: z.string().optional(),
 });
 
 export type ProductFormValues = z.infer<typeof createProductSchema>;
