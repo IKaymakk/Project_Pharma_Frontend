@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Search, Filter } from "lucide-react"
+import { ChevronLeft, ChevronRight, Search } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]

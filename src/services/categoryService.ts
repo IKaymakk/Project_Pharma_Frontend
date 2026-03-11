@@ -13,12 +13,12 @@ export const categoryService = {
         return response.data;
     },
 
-    create: async (name: string, code: string, lang: string = "tr"): Promise<number> => {
+    create: async (name: string, lang: string = "tr"): Promise<number> => {
         const response = await api.post("/Categories", { name, code: null, languageCode: lang });
         return response.data;
     },
 
-    update: async (id: number, name: string, code: string, lang: string = "tr"): Promise<void> => {
+    update: async (id: number, name: string, lang: string = "tr"): Promise<void> => {
         await api.put(`/Categories/${id}`, { id, name, code: null, languageCode: lang });
     },
 

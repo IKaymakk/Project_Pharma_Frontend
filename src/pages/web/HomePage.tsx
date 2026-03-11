@@ -316,7 +316,7 @@ export default function HomePage() {
                                     { icon: TestTubes, title: "Research Institutions", sub: "R&D Centers" },
                                     { icon: Stethoscope, title: "Licensed Pharmacies", sub: "Verified Distribution" },
                                     { icon: Globe2, title: "Regional Distributors", sub: "Global Network" },
-                                ].map(({ icon: Icon, title, sub }, i) => (
+                                ].map(({ icon: Icon, title, sub },) => (
                                     <div key={title}
                                         className="group bg-slate-50 border border-slate-200 hover:border-blue-200 hover:bg-blue-50/40 rounded-2xl p-6 flex flex-col items-start gap-4 transition-all duration-200 hover:shadow-md cursor-default">
                                         <div className="h-11 w-11 rounded-xl bg-white border border-slate-200 group-hover:border-blue-200 group-hover:bg-blue-600 text-blue-500 group-hover:text-white flex items-center justify-center shadow-sm transition-all duration-300">

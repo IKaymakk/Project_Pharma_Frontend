@@ -22,19 +22,6 @@ interface Props {
     onSuccess: () => void;
 }
 
-// 📌 BACKEND'DE BU TABLOLAR OLMADIĞI İÇİN ŞİMDİLİK ELLE YAZIYORUZ
-// Buradaki ID'ler veritabanındaki (varsa) ID'lerle tutmalı. Yoksa rastgele 1,2 seçiyoruz.
-const staticCategories = [
-    { id: "1", name: "Onkoloji" },
-    { id: "2", name: "Hematoloji" },
-    { id: "3", name: "Nöroloji" },
-];
-
-const staticForms = [
-    { id: "1", name: "Enjeksiyon" },
-    { id: "2", name: "Tablet" },
-    { id: "3", name: "Oral Çözelti" },
-];
 
 export function CreateProductDialog({ onSuccess }: Props) {
     const [open, setOpen] = useState(false);

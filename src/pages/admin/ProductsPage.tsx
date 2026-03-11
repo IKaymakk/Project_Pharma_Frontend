@@ -5,12 +5,11 @@ import { DataTable } from "@/components/shared/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { CreateProductDialog } from "@/components/admin/products/CreateProductDialog";
 import {
-    Pencil, Trash2, Plus, FileSpreadsheet, RefreshCw, Eye,
-    Search, ChevronRight, Package, Tag, Layers,
-    SlidersHorizontal, Download, MoreHorizontal
+    Pencil, Trash2, RefreshCw, Eye,
+    ChevronRight, Package, Tag, Layers,
+    Download, MoreHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import { EditProductDialog } from "@/components/admin/products/EditProductDialog";
 import {
