@@ -7,7 +7,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, Save, Trash2, Pencil, X, Tablets } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Plus, Save, Trash2, Pencil, X, Tablets, Globe } from "lucide-react";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -23,18 +24,19 @@ export function DosageFormManagerDialog({ open, onOpenChange }: Props) {
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
-    // Form State (Sadece Name var)
+    // ✅ DİL STATE'İ EKLENDİ
+    const [currentLang, setCurrentLang] = useState("tr");
+
     const [name, setName] = useState("");
     const [editingId, setEditingId] = useState<number | null>(null);
-
-    // Silme Dialog State
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
-    // Verileri Çek
+    // Verileri Çek (Seçili dile göre)
     const fetchForms = async () => {
         setLoading(true);
         try {
-            const data = await dosageFormService.getAll("tr");
+            // ✅ "tr" YERİNE currentLang KULLANILIYOR
+            const data = await dosageFormService.getAll(currentLang);
             setForms(data);
         } catch {
             toast.error("Formlar yüklenemedi", { position: "top-right" });
@@ -43,11 +45,11 @@ export function DosageFormManagerDialog({ open, onOpenChange }: Props) {
         }
     };
 
+    // Modal açıldığında VEYA dil değiştiğinde verileri yeniden çek
     useEffect(() => {
         if (open) fetchForms();
-    }, [open]);
+    }, [open, currentLang]); // ✅ currentLang dependency'e eklendi
 
-    // Kaydet veya Güncelle
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name) {
@@ -58,10 +60,12 @@ export function DosageFormManagerDialog({ open, onOpenChange }: Props) {
         setSubmitting(true);
         try {
             if (editingId) {
-                await dosageFormService.update(editingId, name, "tr");
-                toast.success("Güncelleme Başarılı", { position: "top-right", autoClose: 2000 });
+                // ✅ GÜNCELLEME İŞLEMİ (Seçili dile göre)
+                await dosageFormService.update(editingId, name, currentLang);
+                toast.success("Çeviri/Güncelleme Başarılı", { position: "top-right", autoClose: 2000 });
             } else {
-                await dosageFormService.create(name, "tr");
+                // ✅ YENİ EKLEME (Seçili dile göre)
+                await dosageFormService.create(name, currentLang);
                 toast.success("Ekleme Başarılı", { position: "top-right", autoClose: 2000 });
             }
 
@@ -88,7 +92,8 @@ export function DosageFormManagerDialog({ open, onOpenChange }: Props) {
     };
 
     const startEdit = (item: DosageFormDto) => {
-        setName(item.name || "");
+        // Eğer çeviri yoksa backend 'Tanımsız' gönderiyor. Formda 'Tanımsız' yazmaması için boşaltıyoruz.
+        setName(item.name === "Tanımsız" ? "" : (item.name || ""));
         setEditingId(item.id);
     };
 
@@ -109,12 +114,30 @@ export function DosageFormManagerDialog({ open, onOpenChange }: Props) {
                     </DialogTitle>
                 </DialogHeader>
 
+                {/* ✅ DİL SEÇİCİ EKLENDİ */}
+                <div className="px-6 py-2 bg-slate-50 border-b border-slate-100 flex justify-end">
+                    <div className="flex items-center gap-2">
+                        <Globe className="h-3.5 w-3.5 text-slate-400" />
+                        <Select value={currentLang} onValueChange={(val) => {
+                            setCurrentLang(val);
+                            resetForm(); // Dil değişince formu sıfırla ki yanlışlıkla eski dildeki veri kaydedilmesin
+                        }}>
+                            <SelectTrigger className="h-7 w-32 text-xs bg-white border-slate-200">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="tr" className="text-xs">🇹🇷 Türkçe</SelectItem>
+                                <SelectItem value="en" className="text-xs">🇺🇸 English</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
                 <div className="p-6">
-                    {/* ── FORM ── */}
                     <form onSubmit={handleSubmit} className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
                         <div className="flex items-center justify-between mb-3">
                             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                {editingId ? "Formu Düzenle" : "Yeni Form Ekle"}
+                                {editingId ? "Form Çevirisi Düzenle" : "Yeni Form Ekle"}
                             </span>
                             {editingId && (
                                 <Button type="button" variant="ghost" size="sm" onClick={resetForm} className="h-5 px-2 text-[10px] text-red-500 hover:bg-red-50 hover:text-red-600">
@@ -130,7 +153,7 @@ export function DosageFormManagerDialog({ open, onOpenChange }: Props) {
                                     value={name}
                                     onChange={e => setName(e.target.value)}
                                     className="h-8 text-xs bg-white"
-                                    placeholder="Örn: Tablet, Şurup, Ampul..."
+                                    placeholder={currentLang === "tr" ? "Örn: Tablet, Şurup..." : "e.g: Tablet, Syrup..."}
                                     autoFocus
                                 />
                             </div>
@@ -141,7 +164,6 @@ export function DosageFormManagerDialog({ open, onOpenChange }: Props) {
                         </div>
                     </form>
 
-                    {/* ── LİSTE ── */}
                     <div className="space-y-2">
                         <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                             <span className="text-xs font-semibold text-slate-700">Kayıtlı Formlar</span>
@@ -154,7 +176,12 @@ export function DosageFormManagerDialog({ open, onOpenChange }: Props) {
                             <div className="max-h-[300px] overflow-y-auto pr-1 space-y-1">
                                 {forms.map(item => (
                                     <div key={item.id} className={`group flex items-center justify-between p-2 rounded border text-xs transition-colors ${editingId === item.id ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-100 hover:border-emerald-200"}`}>
-                                        <div className="font-medium text-slate-800 pl-1">{item.name || "İsimsiz"}</div>
+
+                                        {/* Tanımsız ise kırmızımsı gösterelim ki çeviri eksikliği belli olsun */}
+                                        <div className={`font-medium pl-1 ${item.name === "Tanımsız" ? "text-red-400 italic" : "text-slate-800"}`}>
+                                            {item.name}
+                                        </div>
+
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50" onClick={() => startEdit(item)}>
                                                 <Pencil className="h-3 w-3" />
@@ -176,7 +203,9 @@ export function DosageFormManagerDialog({ open, onOpenChange }: Props) {
                 <AlertDialogContent className="bg-white border-slate-200 z-[9999]">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Silmek İstiyor musunuz?</AlertDialogTitle>
-                        <AlertDialogDescription>Bu işlem geri alınamaz.</AlertDialogDescription>
+                        <AlertDialogDescription>
+                            Ana kaydı silerseniz, tüm dillere ait çeviriler de devre dışı kalacaktır.
+                        </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel className="h-8 text-xs">Vazgeç</AlertDialogCancel>

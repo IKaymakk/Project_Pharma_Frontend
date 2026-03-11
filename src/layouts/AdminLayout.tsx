@@ -58,7 +58,7 @@ export default function AdminLayout() {
                     </div>
                     {!collapsed && (
                         <span className="text-xl font-bold text-slate-800 tracking-tight whitespace-nowrap">
-                            Pharma<span className="text-slate-400 font-medium">ERP</span>
+                            Curi<span className="text-slate-400 font-medium">pharma</span>
                         </span>
                     )}
                 </div>
