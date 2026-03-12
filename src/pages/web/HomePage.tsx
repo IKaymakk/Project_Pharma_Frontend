@@ -75,7 +75,7 @@ function Marquee({ items, reverse = false, speed = 40 }: MarqueeProps) {
    Bileşen: Animasyonlu İstatistik Kartı (StatCard)
 ───────────────────────────────────────── */
 interface StatCardProps { val: string; label: string; icon: any; start: boolean; delay: number; }
-function StatCard({ val, label, icon: Icon, start, delay }: StatCardProps) {
+function StatCard({ val, label, icon: Icon, start }: StatCardProps) {
     const num = parseInt(val.replace(/\D/g, ""), 10);
     const suffix = val.replace(/\d/g, "");
     const count = useCounter(isNaN(num) ? 0 : num, start);
