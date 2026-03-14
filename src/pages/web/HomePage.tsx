@@ -1,7 +1,7 @@
 import {
     ArrowRight, ShieldCheck, Globe2, PackageCheck, Snowflake,
-    Pill, Building2, TestTubes, Stethoscope, Zap,
-    CheckCircle2, ArrowUpRight, Sparkles, Activity, ShieldPlus,
+    Pill, Zap,
+    CheckCircle2, ArrowUpRight, Activity, ShieldPlus,
     Thermometer, FileCheck, TrendingUp, Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -172,8 +172,6 @@ function GlassFeatureCard({ icon: Icon, label, title, body, accent, glow, delay 
 export default function HomePage() {
     const heroBgRef = useRef<HTMLDivElement>(null);
     const heroContentRef = useRef<HTMLDivElement>(null);
-    const orb1Ref = useRef<HTMLDivElement>(null);
-    const orb2Ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const lenis = new Lenis({
