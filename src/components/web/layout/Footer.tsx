@@ -1,4 +1,4 @@
-import { Mail, MapPin, Phone, ArrowRight, Shield, ExternalLink, ChevronRight, Globe2 } from "lucide-react";
+import { Mail, MapPin, Phone, ArrowRight, Shield, ChevronRight, Globe2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

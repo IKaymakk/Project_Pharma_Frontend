@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
     ArrowRight, ShieldCheck, Globe2, Snowflake,
-    CheckCircle2, Award, Users, Building2,
+    CheckCircle2, Award, Users,
     TrendingUp, Heart, Zap, Lock, ChevronRight,
-    Activity, Target, MapPin, Cpu
+    Target, Cpu
 } from "lucide-react";
 import Lenis from "lenis";
 
@@ -519,23 +519,51 @@ export default function AboutPage() {
                                 </div>
                             </div>
 
-                            {/* Bottom grid: 4 cards */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                                {[
-                                    { icon: Activity, title: "Transparency", desc: "Real-time status updates and full regulatory visibility across every transaction.", accent: "bg-slate-900 text-slate-100" },
-                                    { icon: Heart, title: "Patient Ethics", desc: "Adhering to international anti-counterfeiting laws and ethical sourcing standards.", accent: "bg-rose-50 text-rose-500" },
-                                    { icon: Zap, title: "Agility", desc: "Rapid response to market shifts and urgent humanitarian supply requirements.", accent: "bg-amber-50 text-amber-500" },
-                                    { icon: Lock, title: "Compliance", desc: "Full documentation and regulatory support — we make complexity our problem.", accent: "bg-emerald-50 text-emerald-600" },
-                                ].map(({ icon: Icon, title, desc, accent }, i) => (
-                                    <div key={title} className={`e-card rounded-[1.75rem] p-7 ${accent.includes("slate-900") ? "bg-slate-900 text-white" : "bg-white border border-slate-200/70"} overflow-hidden relative group`}>
-                                        <div className={`h-11 w-11 rounded-xl flex items-center justify-center mb-6 ${accent.includes("slate-900") ? "bg-white/10" : accent.replace("text-", "bg-").replace(/\-[0-9]+$/, "-50")}`}>
-                                            <Icon className={`h-5 w-5 ${accent.includes("slate-900") ? "text-blue-400" : accent.split(" ")[1]}`} />
-                                        </div>
-                                        <h3 className={`font-display font-black text-[16px] mb-2 ${accent.includes("slate-900") ? "text-white" : "text-slate-900"}`}>{title}</h3>
-                                        <p className={`text-[13px] leading-[1.75] font-light ${accent.includes("slate-900") ? "text-slate-400" : "text-slate-500"}`}>{desc}</p>
-                                    </div>
-                                ))}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <ValueCard
+                                    icon={ShieldCheck}
+                                    title="Uncompromising Quality"
+                                    desc="Every product in our portfolio meets stringent GMP and GDP standards. We source exclusively from verified, licensed manufacturers."
+                                    accent="bg-blue-50 text-blue-600"
+                                    delay={0}
+                                />
+                                <ValueCard
+                                    icon={Globe2}
+                                    title="Global Reach, Local Care"
+                                    desc="We operate in 50+ countries but maintain dedicated regional expertise — understanding local regulations and market dynamics."
+                                    accent="bg-cyan-50 text-cyan-600"
+                                    delay={100}
+                                />
+                                <ValueCard
+                                    icon={Snowflake}
+                                    title="Cold-Chain Integrity"
+                                    desc="Temperature-sensitive products receive dedicated logistics with real-time monitoring from warehouse to final destination."
+                                    accent="bg-indigo-50 text-indigo-600"
+                                    delay={200}
+                                />
+                                <ValueCard
+                                    icon={Lock}
+                                    title="Regulatory Transparency"
+                                    desc="Full documentation, traceability, and compliance support for every market. We make regulatory complexity our problem, not yours."
+                                    accent="bg-emerald-50 text-emerald-600"
+                                    delay={300}
+                                />
+                                <ValueCard
+                                    icon={Heart}
+                                    title="Patient-Centred Purpose"
+                                    desc="Behind every order is a patient. That responsibility is the constant reminder of why precision and reliability are non-negotiable."
+                                    accent="bg-rose-50 text-rose-600"
+                                    delay={400}
+                                />
+                                <ValueCard
+                                    icon={Zap}
+                                    title="Speed Without Shortcuts"
+                                    desc="Responsive supply chains and expedited customs solutions — without ever cutting corners on product integrity."
+                                    accent="bg-amber-50 text-amber-600"
+                                    delay={500}
+                                />
                             </div>
+
                         </div>
                     </section>
                 </div>

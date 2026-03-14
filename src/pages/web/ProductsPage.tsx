@@ -51,7 +51,6 @@ function useDebounce<T>(value: T, delay = 280): T {
     return d;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "https://localhost:7249";
 
 // ─────────────────────────────────────────────────────────────
 // PRODUCT CARD — Premium redesign
