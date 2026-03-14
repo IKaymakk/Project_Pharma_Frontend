@@ -7,10 +7,14 @@ import "react-toastify/dist/ReactToastify.css";
 import HomePage from '@/pages/web/HomePage';
 import ProductsPage2 from './pages/web/ProductsPage';
 import AboutPage from './pages/web/About';
+import QualityPage from './pages/web/QualityPage';
+import GlobalLoader from './components/shared/GlobalLoader';
+import Contact from './pages/web/Contact';
 function App() {
   return (
     <>
       <Router>
+        <GlobalLoader />
         <Routes>
 
           {/* 🌐 VİTRİN (PUBLIC) TARAFI */}
@@ -20,8 +24,8 @@ function App() {
             {/* Diğer Alt Sayfalar (Şimdilik geçici) */}
             <Route path="about" element={<AboutPage />} />
             <Route path="products" element={<ProductsPage2 />} />
-            <Route path="quality" element={<div className="p-20 text-center text-xl">Kalite (GMP) Sayfası</div>} />
-            <Route path="contact" element={<div className="p-20 text-center text-xl">İletişim Sayfası</div>} />
+            <Route path="quality" element={<QualityPage />} />
+            <Route path="contact" element={<Contact />} />
           </Route>
 
 

@@ -1,14 +1,15 @@
 import {
     ArrowRight, ShieldCheck, Globe2, PackageCheck, Snowflake,
     Pill, Building2, TestTubes, Stethoscope, Zap,
-    CheckCircle2, ArrowUpRight, Sparkles, Activity, ShieldPlus
+    CheckCircle2, ArrowUpRight, Sparkles, Activity, ShieldPlus,
+    Thermometer, FileCheck, TrendingUp, Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import React, { useEffect, useRef, useState } from "react";
 import Lenis from "lenis";
 
 // ─────────────────────────────────────────────────────────────
-// SABİTLER (Magic Numbers Temizlendi)
+// SABİTLER
 // ─────────────────────────────────────────────────────────────
 const PARALLAX_BG_FACTOR = 0.3;
 const PARALLAX_CONTENT_FACTOR = 0.2;
@@ -37,43 +38,33 @@ function useReveal(threshold = 0.15) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Hook: Animated Counter (Render ve Memory Leak Optimize)
+// Hook: Animated Counter
 // ─────────────────────────────────────────────────────────────
 function useCounter(target: number, start: boolean): number {
     const [n, setN] = useState<number>(0);
     const prevN = useRef<number>(0);
-
     useEffect(() => {
         if (!start || isNaN(target)) return;
         let t0: number | undefined;
         let rafId: number;
-
         const step = (ts: number) => {
             if (t0 === undefined) t0 = ts;
             const p = Math.min((ts - t0) / COUNTER_DURATION_MS, 1);
             const next = Math.floor((1 - Math.pow(1 - p, 3)) * target);
-
-            // Sadece sayı değiştiğinde render tetikle (Performans Fix)
-            if (next !== prevN.current) {
-                prevN.current = next;
-                setN(next);
-            }
+            if (next !== prevN.current) { prevN.current = next; setN(next); }
             if (p < 1) rafId = requestAnimationFrame(step);
         };
-
         rafId = requestAnimationFrame(step);
-        return () => cancelAnimationFrame(rafId); // Memory Leak Fix
+        return () => cancelAnimationFrame(rafId);
     }, [target, start]);
-
     return n;
 }
 
 // ─────────────────────────────────────────────────────────────
-// Component: Infinite Marquee (DOM Optimize)
+// Component: Infinite Marquee
 // ─────────────────────────────────────────────────────────────
 interface MarqueeProps { items: React.ReactNode[]; reverse?: boolean; speed?: number; }
 function Marquee({ items, reverse = false, speed = 40 }: MarqueeProps) {
-    // DOĞRU MATEMATİK: -50% kaydırma için 2 kopya yeterlidir (DOM yükü azaltıldı)
     const cloned = [...items, ...items];
     return (
         <div className="overflow-hidden relative flex">
@@ -82,10 +73,7 @@ function Marquee({ items, reverse = false, speed = 40 }: MarqueeProps) {
                 style={{ "--spd": `${speed}s` } as React.CSSProperties}
             >
                 {cloned.map((item, i) => (
-                    <div
-                        key={i}
-                        className="flex items-center gap-3 px-8 py-4 border-r border-slate-700/50 text-[12px] font-bold tracking-[.15em] uppercase text-slate-300 whitespace-nowrap"
-                    >
+                    <div key={i} className="flex items-center gap-3 px-8 py-4 border-r border-slate-700/50 text-[12px] font-bold tracking-[.15em] uppercase text-slate-300 whitespace-nowrap">
                         {item}
                     </div>
                 ))}
@@ -95,19 +83,17 @@ function Marquee({ items, reverse = false, speed = 40 }: MarqueeProps) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Component: StatCard (TypeScript Optimize)
+// Component: StatCard
 // ─────────────────────────────────────────────────────────────
 interface StatCardProps {
-    val: string;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>; // TS Fix
+    val: string; label: string;
+    icon: React.ComponentType<{ className?: string }>;
     start: boolean;
 }
 function StatCard({ val, label, icon: Icon, start }: StatCardProps) {
     const num = parseInt(val.replace(/\D/g, ""), 10);
     const suffix = val.replace(/\d/g, "");
     const count = useCounter(isNaN(num) ? 0 : num, start);
-
     return (
         <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-3xl p-10 flex flex-col items-center text-center gap-5 hover:-translate-y-1 transition-transform cursor-default">
             <div className="h-16 w-16 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
@@ -122,9 +108,11 @@ function StatCard({ val, label, icon: Icon, start }: StatCardProps) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Component: SectionLabel (Semantik Naming Fix)
+// Component: SectionLabel
 // ─────────────────────────────────────────────────────────────
-function SectionLabel({ children, centered = false, onDark = false }: { children: React.ReactNode; centered?: boolean; onDark?: boolean; }) {
+function SectionLabel({ children, centered = false, onDark = false }: {
+    children: React.ReactNode; centered?: boolean; onDark?: boolean;
+}) {
     return (
         <div className={`inline-flex items-center gap-2 mb-4 ${centered ? "mx-auto justify-center" : ""}`}>
             <span className={`h-px w-8 ${onDark ? "bg-blue-400" : "bg-blue-600"}`} />
@@ -132,6 +120,48 @@ function SectionLabel({ children, centered = false, onDark = false }: { children
                 {children}
             </span>
             {centered && <span className={`h-px w-8 ${onDark ? "bg-blue-400" : "bg-blue-600"}`} />}
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Component: GlassFeatureCard  (YENİ BÖLÜM İÇİN)
+// ─────────────────────────────────────────────────────────────
+interface GlassCardProps {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    title: string;
+    body: string;
+    accent: string;   // tailwind text color class
+    glow: string;     // tailwind shadow/ring class
+    delay?: number;
+    visible: boolean;
+}
+function GlassFeatureCard({ icon: Icon, label, title, body, accent, glow, delay = 0, visible }: GlassCardProps) {
+    return (
+        <div
+            className={`
+                group relative rounded-2xl border border-white/[0.08] bg-white/[0.04]
+                p-7 overflow-hidden
+                transition-all duration-700 ease-out
+                hover:border-white/[0.16] hover:bg-white/[0.07]
+                ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}
+            `}
+            style={{ transitionDelay: `${delay}ms` }}
+        >
+            {/* Top glow bar */}
+            <div className={`absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent ${glow} to-transparent opacity-60 group-hover:opacity-100 transition-opacity duration-500`} />
+
+            <div className="flex items-start gap-5">
+                <div className={`h-11 w-11 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className={`h-5 w-5 ${accent}`} />
+                </div>
+                <div>
+                    <div className={`text-[10px] font-black tracking-[0.22em] uppercase mb-1.5 ${accent} opacity-80`}>{label}</div>
+                    <h4 className="font-black text-[16px] text-white mb-2 leading-snug group-hover:text-slate-100 transition-colors">{title}</h4>
+                    <p className="text-[13px] text-slate-400 font-light leading-[1.75]">{body}</p>
+                </div>
+            </div>
         </div>
     );
 }
@@ -145,7 +175,6 @@ export default function HomePage() {
     const orb1Ref = useRef<HTMLDivElement>(null);
     const orb2Ref = useRef<HTMLDivElement>(null);
 
-    // Lenis Scroll & Parallax
     useEffect(() => {
         const lenis = new Lenis({
             duration: 1.2,
@@ -153,37 +182,31 @@ export default function HomePage() {
             orientation: "vertical",
             smoothWheel: true,
         });
-
         lenis.on("scroll", (e: any) => {
             const scrollY = e.scroll;
-
-            if (heroBgRef.current) {
-                heroBgRef.current.style.transform = `translateY(${scrollY * PARALLAX_BG_FACTOR}px)`;
-            }
-            if (heroContentRef.current) {
-                heroContentRef.current.style.transform = `translateY(${scrollY * PARALLAX_CONTENT_FACTOR}px)`;
-                heroContentRef.current.style.opacity = `${Math.max(1 - scrollY / HERO_FADE_DISTANCE, 0)}`;
-            }
+            // rAF wrap: scroll callback'ini bir sonraki paint frame'ine ertele
+            // Bu şekilde style yazımları layout thrashing yaratmaz
+            requestAnimationFrame(() => {
+                if (heroBgRef.current) {
+                    heroBgRef.current.style.transform = `translateY(${scrollY * PARALLAX_BG_FACTOR}px)`;
+                }
+                if (heroContentRef.current) {
+                    heroContentRef.current.style.transform = `translateY(${scrollY * PARALLAX_CONTENT_FACTOR}px)`;
+                    heroContentRef.current.style.opacity = `${Math.max(1 - scrollY / HERO_FADE_DISTANCE, 0)}`;
+                }
+            });
         });
-
         let rafId: number;
-        const raf = (time: number) => {
-            lenis.raf(time);
-            rafId = requestAnimationFrame(raf);
-        };
+        const raf = (time: number) => { lenis.raf(time); rafId = requestAnimationFrame(raf); };
         rafId = requestAnimationFrame(raf);
-
-        // CLEANUP (Memory Leak Fix)
-        return () => {
-            lenis.destroy();
-            cancelAnimationFrame(rafId);
-        };
+        return () => { lenis.destroy(); cancelAnimationFrame(rafId); };
     }, []);
 
     const services = useReveal(0.1);
     const clientsSec = useReveal(0.1);
     const globalOps = useReveal(0.2);
     const quality = useReveal(0.1);
+    const pillars = useReveal(0.1);   // YENİ
 
     const topMarqueeItems = [
         <><ShieldCheck className="w-4 h-4 text-blue-400" /> GDP Compliant</>,
@@ -206,32 +229,17 @@ export default function HomePage() {
     return (
         <>
             <style>{`
-                html, body {
-                    overflow-x: hidden;
-                    width: 100%;
-                    margin: 0;
-                    padding: 0;
-                    overscroll-behavior-y: none;
-                }
-                
-                /* Font class'ı tutuldu, ancak JSX içi Font Yüklemesi silindi (LCP Fix) */
+                html, body { overflow-x: hidden; width: 100%; margin: 0; padding: 0; overscroll-behavior-y: none; }
                 .font-body { font-family: 'DM Sans', system-ui, sans-serif; }
 
-                @keyframes fadeUp {
-                    from { opacity: 0; transform: translateY(24px); }
-                    to   { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to   { opacity: 1; }
-                }
-                .anim-1 { animation: fadeUp 0.7s cubic-bezier(.16,1,.3,1) both 0.10s; }
-                .anim-2 { animation: fadeUp 0.7s cubic-bezier(.16,1,.3,1) both 0.25s; }
-                .anim-3 { animation: fadeUp 0.7s cubic-bezier(.16,1,.3,1) both 0.40s; }
-                .anim-4 { animation: fadeUp 0.7s cubic-bezier(.16,1,.3,1) both 0.55s; }
+                @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                .anim-1 { animation: fadeUp 1.5s cubic-bezier(.16,1,.3,1) both 1.5s; }
+                .anim-2 { animation: fadeUp 0.7s cubic-bezier(.16,1,.3,1) both 1.05s; }
+                .anim-3 { animation: fadeUp 0.7s cubic-bezier(.16,1,.3,1) both 1.20s; }
+                .anim-4 { animation: fadeUp 0.7s cubic-bezier(.16,1,.3,1) both 1.35s; }
                 .anim-fade { animation: fadeIn 1.2s ease both 0.2s; }
 
-                /* CSS Naming Collision Fix (mq -> cp-marquee) & Matematik Fix (-50%) */
                 @keyframes cp-marquee  { from { transform: translateX(0); } to { transform: translateX(-50%); } }
                 @keyframes cp-marqueer { from { transform: translateX(-50%); } to { transform: translateX(0); } }
                 .animate-marquee     { animation: cp-marquee  var(--spd, 40s) linear infinite; }
@@ -242,7 +250,6 @@ export default function HomePage() {
                 .rh { opacity: 0; transform: translateY(40px); }
                 .rs { opacity: 1; transform: translateY(0); }
 
-                /* CSS Naming Collision Fix (sh -> cp-shimmer) */
                 .shimmer { position: relative; overflow: hidden; }
                 .shimmer::after {
                     content: ''; position: absolute; inset: 0;
@@ -260,13 +267,24 @@ export default function HomePage() {
                     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
                 }
                 
-                @keyframes cp-spin     { 100% { transform: rotate(360deg);  } }
-                @keyframes cp-spin-rev { 100% { transform: rotate(-360deg); } }
-                .spin-ring     { animation: cp-spin     20s linear infinite; }
-                .spin-ring-rev { animation: cp-spin-rev 25s linear infinite; }
+                .hero-content-layer { will-change: auto; }
 
-                /* Layer Fix: Scroll performansı için opacity eklendi */
-                .hero-content-layer { will-change: transform, opacity; }
+                /* YENİ: diagonal stripe arka plan deseni */
+                .stripe-bg {
+                    background-image: repeating-linear-gradient(
+                        -55deg,
+                        transparent,
+                        transparent 40px,
+                        rgba(255,255,255,0.012) 40px,
+                        rgba(255,255,255,0.012) 41px
+                    );
+                }
+                /* YENİ: sayaç glow efekti */
+                @keyframes cp-counter-glow {
+                    0%, 100% { text-shadow: 0 0 20px rgba(59,130,246,0.3); }
+                    50%      { text-shadow: 0 0 40px rgba(34,211,238,0.5), 0 0 80px rgba(59,130,246,0.2); }
+                }
+                .counter-glow { }
             `}</style>
 
             <div className="font-body flex flex-col min-h-screen bg-slate-50 w-full overflow-clip mt-28">
@@ -275,76 +293,47 @@ export default function HomePage() {
                     1. HERO
                 ══════════════════════════════════════ */}
                 <section className="relative min-h-[90vh] md:min-h-[100vh] flex flex-col items-center justify-center diagonal-clip pt-32 pb-[15vh]">
-
-                    <div ref={heroBgRef} className="absolute inset-0 z-0 anim-fade will-change-transform">
-                        <div
-                            className="absolute inset-0 w-full h-[120%] -top-[10%]"
-                            style={{
-                                backgroundImage: "url('https://i.hizliresim.com/ke9lr02.jpg')",
-                                backgroundSize: "cover",
-                                backgroundPosition: "center top",
-                            }}
-                        />
-                        <div className="absolute inset-0 bg-[#071525]/85 backdrop-blur-[1px]" />
+                    <div ref={heroBgRef} className="absolute inset-0 z-0 anim-fade">
+                        <div className="absolute inset-0 w-full h-[120%] -top-[10%]"
+                            style={{ backgroundImage: "url('https://i.hizliresim.com/ke9lr02.jpg')", backgroundSize: "cover", backgroundPosition: "center top" }} />
+                        <div className="absolute inset-0 bg-[#071525]/85" />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#071525] via-transparent to-transparent opacity-90" />
                         <div className="absolute inset-0 dot-grid opacity-40" />
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/15 rounded-full blur-[150px] pointer-events-none" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[100px] pointer-events-none" />
                     </div>
-
-                    <div
-                        ref={heroContentRef}
-                        className="hero-content-layer relative z-10 max-w-5xl mx-auto px-4 w-full flex flex-col items-center text-center -mt-40 md:-mt-40"
-                    >
+                    <div ref={heroContentRef} className="hero-content-layer relative z-10 max-w-5xl mx-auto px-4 w-full flex flex-col items-center text-center -mt-40 md:-mt-40">
                         <div className="anim-1 relative group inline-flex mb-8 cursor-default">
-                            <div className="absolute -inset-[3px] rounded-full bg-gradient-to-r from-blue-500/20 via-cyan-400/20 to-blue-500/20 blur-[0px] opacity-40 animate-pulse transition duration-1000"></div>
-                            <div className="relative flex items-center gap-2.5 px-6 py-2 rounded-full border border-blue-400/10 bg-white/5 backdrop-blur-md">
+                            <div className="absolute -inset-[3px] rounded-full bg-gradient-to-r from-blue-500/20 via-cyan-400/20 to-blue-500/20 opacity-30" />
+                            <div className="relative flex items-center gap-2.5 px-6 py-2 rounded-full border border-blue-400/10 bg-[#0d1f34]">
                                 <span className="relative flex h-1.5 w-1.5">
-                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400/70"></span>
-                                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)]"></span>
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400/70" />
+                                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
                                 </span>
                                 <span className="text-[9.5px] md:text-[11px] font-bold tracking-[0.25em] uppercase text-slate-300">
                                     Premier Pharmaceutical Wholesaler
                                 </span>
                             </div>
                         </div>
-
-                        <h1
-                            className="font-black anim-2 text-white leading-[1.05] mb-6 drop-shadow-2xl"
-                            style={{ fontSize: "clamp(2.2rem, 5vw, 4rem)" }}
-
-                        >
+                        <h1 className="font-black anim-2 text-white leading-[1.05] mb-6 drop-shadow-2xl" style={{ fontSize: "clamp(2.2rem, 5vw, 4rem)" }}>
                             Leading the Future of{" "}
                             <span className="relative inline-block">
-                                <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-                                    Global Pharma
-                                </span>
+                                <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Global Pharma</span>
                                 <span className="absolute -bottom-2 left-0 right-0 h-[4px] bg-blue-500/30 rounded-full blur-[2px]" />
                             </span>
                             {" "}Distribution
                         </h1>
-
                         <p className="anim-3 text-slate-400 text-[16px] md:text-[18px] leading-relaxed mb-10 max-w-3xl font-light drop-shadow-md">
-                            We integrate procurement, agency services, customs clearance, and distribution into a seamless
-                            one-stop solution.{" "}
+                            We integrate procurement, agency services, customs clearance, and distribution into a seamless one-stop solution.{" "}
                             <strong className="text-white font-medium">GMP & GDP certified</strong> for absolute reliability.
                         </p>
-
                         <div className="anim-4 flex flex-col sm:flex-row items-center justify-center gap-5 w-full">
-                            <Link
-                                to="/products"
-                                aria-label="View our product catalog"
-                                className="shimmer w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-9 py-4 rounded-xl text-[15px] font-bold transition-all shadow-[0_0_30px_rgba(37,99,235,0.35)] hover:shadow-[0_0_40px_rgba(37,99,235,0.5)] hover:-translate-y-1"
-                            >
-                                View Product Catalog
-                                <ArrowRight className="h-5 w-5" />
+                            <Link to="/products" aria-label="View our product catalog"
+                                className="shimmer w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-9 py-4 rounded-xl text-[15px] font-bold transition-all shadow-[0_0_30px_rgba(37,99,235,0.35)] hover:shadow-[0_0_40px_rgba(37,99,235,0.5)] hover:-translate-y-1">
+                                View Product Catalog <ArrowRight className="h-5 w-5" />
                             </Link>
-                            <Link
-                                to="/contact"
-                                aria-label="Contact us for partnership"
-                                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/25 px-9 py-4 rounded-xl text-[15px] font-semibold transition-all backdrop-blur-md hover:-translate-y-1"
-                            >
-                                Partner With Us
-                                <ArrowRight className="h-5 w-5 text-slate-400" />
+                            <Link to="/contact" aria-label="Contact us for partnership"
+                                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/25 px-9 py-4 rounded-xl text-[15px] font-semibold transition-all hover:-translate-y-1">
+                                Partner With Us <ArrowRight className="h-5 w-5 text-slate-400" />
                             </Link>
                         </div>
                     </div>
@@ -354,7 +343,7 @@ export default function HomePage() {
                     2. DOUBLE MARQUEE
                 ══════════════════════════════════════ */}
                 <section className="relative z-20 -mt-[50px] px-2 sm:px-4 max-w-[100rem] mx-auto w-full">
-                    <div className="bg-slate-900 backdrop-blur-2xl border border-white/10 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)] rounded-3xl overflow-hidden relative">
+                    <div className="bg-slate-900 border border-white/10 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)] rounded-3xl overflow-hidden relative">
                         <div className="absolute top-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
                         <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#07111f] to-transparent z-10 pointer-events-none" />
                         <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#07111f] to-transparent z-10 pointer-events-none" />
@@ -364,37 +353,28 @@ export default function HomePage() {
                     </div>
                 </section>
 
+
                 {/* ══════════════════════════════════════
-                    3. SERVICES (Dark Pattern Fix - 3 Kart da Tıklanabilir)
+                    3. SERVICES
                 ══════════════════════════════════════ */}
                 <div ref={services.ref}>
                     <section className={`bg-slate-50 relative pt-32 pb-32 border-b border-slate-200 rv ${services.v ? "rs" : "rh"}`}>
                         <div className="absolute inset-0 dot-grid-dark opacity-30" />
                         <div className="relative max-w-7xl mx-auto px-4 md:px-8">
-
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
                                 <div className="max-w-2xl">
                                     <SectionLabel>Our Solutions</SectionLabel>
-                                    <h2
-                                        className="font-black text-slate-900 leading-[1.1] mt-2"
-                                        style={{ fontSize: "clamp(2rem, 4vw, 3.2rem)" }}
-                                    >
+                                    <h2 className="font-black text-slate-900 leading-[1.1] mt-2" style={{ fontSize: "clamp(2rem, 4vw, 3.2rem)" }}>
                                         Engineered for Healthcare Excellence
                                     </h2>
                                 </div>
                                 <p className="text-slate-500 text-[16px] leading-relaxed max-w-md font-light pb-2">
-                                    The pharmaceutical industry demands precision. Our service pillars ensure life-saving treatments
-                                    reach patients safely, on time, and without compromise.
+                                    The pharmaceutical industry demands precision. Our service pillars ensure life-saving treatments reach patients safely, on time, and without compromise.
                                 </p>
                             </div>
-
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-
-                                <Link
-                                    to="/products"
-                                    aria-label="View Brand Name Medicinals"
-                                    className="md:col-span-7 group relative bg-white rounded-[2rem] p-10 overflow-hidden border border-slate-200 hover:border-blue-200 hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.12)] transition-all duration-300 flex flex-col justify-between min-h-[400px]"
-                                >
+                                <Link to="/products" aria-label="View Brand Name Medicinals"
+                                    className="md:col-span-7 group relative bg-white rounded-[2rem] p-10 overflow-hidden border border-slate-200 hover:border-blue-200 hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.12)] transition-all duration-300 flex flex-col justify-between min-h-[400px]">
                                     <div className="absolute -right-20 -top-20 w-80 h-80 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-full blur-3xl group-hover:scale-110 transition-all duration-700" />
                                     <div className="relative z-10 flex items-start justify-between mb-16">
                                         <div className="h-16 w-16 rounded-2xl bg-white border border-slate-100 text-blue-600 flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
@@ -405,39 +385,29 @@ export default function HomePage() {
                                     <div className="relative z-10">
                                         <h4 className="font-black text-[28px] text-slate-900 mb-4 group-hover:text-blue-600 transition-colors duration-300">Original Medicinals</h4>
                                         <p className="text-slate-500 text-[16px] leading-relaxed max-w-md font-light">
-                                            Long-term strategic partnerships with leading manufacturers in Europe, the US, and Japan.
-                                            We guarantee 100% authentic, high-quality products direct from the source.
+                                            Long-term strategic partnerships with leading manufacturers in Europe, the US, and Japan. We guarantee 100% authentic, high-quality products direct from the source.
                                         </p>
                                     </div>
                                     <ArrowUpRight className="absolute bottom-10 right-10 h-8 w-8 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
                                 </Link>
-
-                                <Link
-                                    to="/products"
-                                    aria-label="View Generic Drugs"
-                                    className="md:col-span-5 group relative bg-slate-900 rounded-[2rem] p-10 overflow-hidden border border-slate-800 hover:border-cyan-500/30 hover:shadow-[0_20px_40px_-15px_rgba(34,211,238,0.12)] transition-all duration-300 flex flex-col justify-between min-h-[400px]"
-                                >
+                                <Link to="/products" aria-label="View Generic Drugs"
+                                    className="md:col-span-5 group relative bg-slate-900 rounded-[2rem] p-10 overflow-hidden border border-slate-800 hover:border-cyan-500/30 hover:shadow-[0_20px_40px_-15px_rgba(34,211,238,0.12)] transition-all duration-300 flex flex-col justify-between min-h-[400px]">
                                     <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                     <div className="relative z-10 flex items-start justify-between mb-16">
-                                        <div className="h-14 w-14 rounded-2xl bg-white/10 text-cyan-400 flex items-center justify-center backdrop-blur-md border border-white/5 group-hover:scale-110 transition-transform duration-300">
+                                        <div className="h-14 w-14 rounded-2xl bg-white/10 text-cyan-400 flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform duration-300">
                                             <Pill className="h-6 w-6" />
                                         </div>
                                     </div>
                                     <div className="relative z-10">
                                         <h4 className="font-black text-[24px] text-white mb-3 group-hover:text-cyan-400 transition-colors">Generic Drugs</h4>
                                         <p className="text-slate-400 text-[15px] leading-relaxed font-light">
-                                            Affordable, high-quality pharmaceutical solutions bridging the gap between medical
-                                            innovation and global patient access.
+                                            Affordable, high-quality pharmaceutical solutions bridging the gap between medical innovation and global patient access.
                                         </p>
                                     </div>
                                     <ArrowUpRight className="absolute bottom-10 right-10 h-8 w-8 text-slate-700 group-hover:text-cyan-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
                                 </Link>
-
-                                <Link
-                                    to="/products"
-                                    aria-label="View Specialty Supplies"
-                                    className="md:col-span-12 group relative bg-white rounded-[2rem] p-10 overflow-hidden border border-slate-200 hover:border-blue-200 hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.08)] transition-all duration-300 flex flex-col md:flex-row items-start md:items-center gap-10"
-                                >
+                                <Link to="/products" aria-label="View Specialty Supplies"
+                                    className="md:col-span-12 group relative bg-white rounded-[2rem] p-10 overflow-hidden border border-slate-200 hover:border-blue-200 hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.08)] transition-all duration-300 flex flex-col md:flex-row items-start md:items-center gap-10">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-4 mb-6">
                                             <div className="h-14 w-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -447,8 +417,7 @@ export default function HomePage() {
                                         </div>
                                         <h4 className="font-black text-[24px] text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">Advanced Medical Supplies & Oncology</h4>
                                         <p className="text-slate-500 text-[16px] leading-relaxed max-w-2xl font-light">
-                                            A comprehensive portfolio of innovative, specialty, and rare medications. We provide
-                                            specialized cold-chain logistics tailored for Oncology, Rare Diseases, and Critical Chronic Care.
+                                            A comprehensive portfolio of innovative, specialty, and rare medications. We provide specialized cold-chain logistics tailored for Oncology, Rare Diseases, and Critical Chronic Care.
                                         </p>
                                     </div>
                                     <div className="shrink-0 w-full md:w-auto flex justify-end">
@@ -457,40 +426,189 @@ export default function HomePage() {
                                         </div>
                                     </div>
                                 </Link>
-
                             </div>
                         </div>
                     </section>
                 </div>
 
                 {/* ══════════════════════════════════════
-                    4. WHO WE SERVE (Sticky Scroll)
+                    2.5  WHY CURIPHARMA  (YENİ DARK BÖLÜM)
+                ══════════════════════════════════════ */}
+                <div ref={pillars.ref}>
+                    <section className="relative bg-[#060f1c] py-28 overflow-hidden">
+
+                        {/* — Arka plan katmanları — */}
+                        <div className="absolute inset-0 dot-grid opacity-30 pointer-events-none" />
+                        <div className="absolute inset-0 stripe-bg pointer-events-none" />
+                        <div className="noise-overlay" />
+
+                        {/* Orb'lar */}
+                        <div className="absolute -left-32 top-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue-600/8 rounded-full blur-[80px] pointer-events-none" />
+                        <div className="absolute -right-20 bottom-0 w-[280px] h-[280px] bg-cyan-500/6 rounded-full blur-[70px] pointer-events-none" />
+
+                        {/* İnce üst çizgi */}
+                        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+
+                        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+
+                                {/* ── Sol: Manifesto ── */}
+                                <div className={`rv ${pillars.v ? "rs" : "rh"}`} style={{ transitionDelay: "0ms" }}>
+                                    <SectionLabel onDark>Why Curipharma</SectionLabel>
+
+                                    <h2
+                                        className="font-black text-white leading-[1.06] mb-6 tracking-tight"
+                                        style={{ fontSize: "clamp(2rem, 3.8vw, 3rem)" }}
+                                    >
+                                        The Standard Others{" "}
+                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                                            Measure Against
+                                        </span>
+                                    </h2>
+
+                                    <p className="text-slate-400 text-[15.5px] font-light leading-[1.85] mb-10 max-w-lg">
+                                        In pharmaceutical distribution, precision isn't a preference — it's the baseline.
+                                        We've built every layer of our operation around a single promise: the right product,
+                                        the right condition, the right time.
+                                    </p>
+
+                                    {/* 4 bullet */}
+                                    <ul className="space-y-5 mb-12">
+                                        {[
+                                            { icon: Thermometer, text: "End-to-end temperature monitoring from dispatch to doorstep", color: "text-cyan-400" },
+                                            { icon: FileCheck, text: "Full regulatory documentation: CoA, GMP, Free Sale Certificate", color: "text-blue-400" },
+                                            { icon: TrendingUp, text: "Over 2,000 SKUs across branded, generic, and specialty lines", color: "text-indigo-400" },
+                                            { icon: Lock, text: "Anti-counterfeiting measures embedded at every fulfilment stage", color: "text-emerald-400" },
+                                        ].map(({ icon: Icon, text, color }, i) => (
+                                            <li key={i} className="flex items-start gap-4 group">
+                                                <div className={`h-8 w-8 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-300`}>
+                                                    <Icon className={`h-4 w-4 ${color}`} />
+                                                </div>
+                                                <span className="text-[14px] text-slate-300 font-light leading-relaxed pt-1">{text}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    {/* CTA çifti */}
+                                    <div className="flex flex-wrap items-center gap-4">
+                                        <Link to="/products"
+                                            className="shimmer inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-7 py-3.5 rounded-xl text-[14px] font-bold transition-all shadow-[0_8px_24px_rgba(37,99,235,0.3)] hover:shadow-[0_12px_32px_rgba(37,99,235,0.45)] hover:-translate-y-0.5">
+                                            Browse Catalog <ArrowRight className="h-4 w-4" />
+                                        </Link>
+                                        <Link to="/about"
+                                            className="inline-flex items-center gap-2 text-slate-300 hover:text-white text-[14px] font-semibold transition-colors group/link">
+                                            About Us
+                                            <ArrowUpRight className="h-4 w-4 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform duration-200" />
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                {/* ── Sağ: Asimetrik glass kartlar + büyük sayaç ── */}
+                                <div className="relative">
+
+                                    {/* Büyük arka plan sayacı — dekoratif */}
+                                    <div
+                                        className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+                                        aria-hidden="true"
+                                    >
+                                        <span className="text-[200px] font-black text-white/[0.025] leading-none tracking-tighter">
+                                            15+
+                                        </span>
+                                    </div>
+
+                                    {/* Kartlar — asimetrik grid */}
+                                    <div className="relative flex flex-col gap-4">
+
+                                        {/* Kart 1 — sola yaslı */}
+                                        <div className="mr-12">
+                                            <GlassFeatureCard
+                                                icon={ShieldCheck}
+                                                label="Certification"
+                                                title="GDP & GMP Certified Operations"
+                                                body="Every warehouse, vehicle, and process complies with EU Good Distribution Practice — independently audited and continuously monitored."
+                                                accent="text-blue-400"
+                                                glow="via-blue-500/40"
+                                                delay={80}
+                                                visible={pillars.v}
+                                            />
+                                        </div>
+
+                                        {/* Kart 2 — sağa offset */}
+                                        <div className="ml-12">
+                                            <GlassFeatureCard
+                                                icon={Snowflake}
+                                                label="Cold-Chain"
+                                                title="Unbroken Cold-Chain Integrity"
+                                                body="2–8°C biologics, cryogenic, and controlled-ambient products handled with validated packaging and real-time data loggers."
+                                                accent="text-cyan-400"
+                                                glow="via-cyan-500/40"
+                                                delay={180}
+                                                visible={pillars.v}
+                                            />
+                                        </div>
+
+                                        {/* Kart 3 — orta + küçük sayaç rozeti */}
+                                        <div className="mr-6">
+                                            <GlassFeatureCard
+                                                icon={PackageCheck}
+                                                label="Portfolio"
+                                                title="2,000+ SKUs, One Trusted Source"
+                                                body="Original, generic, and specialty pharmaceuticals across oncology, rare diseases, and chronic care — sourced directly from licensed manufacturers."
+                                                accent="text-indigo-400"
+                                                glow="via-indigo-500/40"
+                                                delay={280}
+                                                visible={pillars.v}
+                                            />
+                                        </div>
+
+                                        {/* Sağ alt köşe rozeti */}
+                                        <div
+                                            className={`self-end flex items-center gap-3 bg-[#0e1f33] border border-white/[0.10] rounded-2xl px-5 py-3.5
+                                                transition-all duration-700 ${pillars.v ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+                                            style={{ transitionDelay: "400ms" }}
+                                        >
+                                            <div className="h-8 w-8 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
+                                                <Globe2 className="h-4 w-4 text-emerald-400" />
+                                            </div>
+                                            <div>
+                                                <div className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">Active in</div>
+                                                <div className="text-[18px] font-black text-white leading-none counter-glow">50+ Countries</div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        {/* İnce alt çizgi */}
+                        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-700/60 to-transparent" />
+                    </section>
+                </div>
+
+
+
+                {/* ══════════════════════════════════════
+                    4. WHO WE SERVE
                 ══════════════════════════════════════ */}
                 <div ref={clientsSec.ref}>
-                    <section className={`bg-white py-32 border-b border-slate-100 overflow-visible relative rv ${clientsSec.v ? "rs" : "rh"}`}>
+                    <section className={`bg-white py-32 border-b border-slate-100 overflow-hidden relative rv ${clientsSec.v ? "rs" : "rh"}`}>
                         <div className="max-w-7xl mx-auto px-4 md:px-8">
-                            <div className="relative flex flex-col lg:flex-row items-start gap-16 lg:gap-24">
-
+                            <div className="relative flex flex-col lg:flex-row items-start gap-16 lg:gap-12">
                                 <div className="lg:w-5/12 lg:sticky lg:top-40 pt-4">
                                     <SectionLabel>Global Network</SectionLabel>
-                                    <h2
-                                        className="font-black text-slate-900 mb-6 leading-[1.1]"
-                                        style={{ fontSize: "clamp(2.2rem, 4vw, 3rem)" }}
-                                    >
+                                    <h2 className="font-black text-slate-900 mb-6 leading-[1.1]" style={{ fontSize: "clamp(2.2rem, 4vw, 3rem)" }}>
                                         A Vital Link in{" "}
-                                        <span className="text-blue-600">Global Healthcare</span>
+                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 drop-shadow-[0_0_12px_rgba(34,211,238,0.2)]">
+                                            Global Healthcare
+                                        </span>
                                     </h2>
                                     <p className="text-slate-500 text-[16px] leading-relaxed mb-8 font-light">
-                                        Our operations span international markets, serving a diverse clientele. We maintain rigorous
-                                        oversight to ensure patient safety and product efficacy at every step of the supply chain.
+                                        Our operations span international markets, serving a diverse clientele. We maintain rigorous oversight to ensure patient safety and product efficacy at every step of the supply chain.
                                     </p>
-                                    <ul className="space-y-4">
-                                        {[
-                                            "International GMP & GDP standards",
-                                            "Cold-chain logistics expertise",
-                                            "24/7 customs operations support",
-                                            "Supply capacity in 50+ countries",
-                                        ].map((item, idx) => (
+                                    <ul className="space-y-4 mb-10">
+                                        {["International GMP & GDP standards", "Cold-chain logistics expertise", "24/7 customs operations support", "Supply capacity in 50+ countries"].map((item, idx) => (
                                             <li key={idx} className="flex items-center gap-4 text-[15px] text-slate-700 font-medium">
                                                 <div className="h-6 w-6 rounded-full bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100">
                                                     <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" />
@@ -499,31 +617,50 @@ export default function HomePage() {
                                             </li>
                                         ))}
                                     </ul>
-                                </div>
-
-                                <div className="lg:w-7/12 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
-                                    {[
-                                        { icon: Building2, title: "Public Hospitals", sub: "Large scale institutional supply", color: "from-blue-500 to-cyan-400" },
-                                        { icon: TestTubes, title: "Research Inst.", sub: "Clinical R&D and lab supply", color: "from-purple-500 to-blue-400" },
-                                        { icon: Stethoscope, title: "Private Clinics", sub: "Specialized private care networks", color: "from-emerald-500 to-teal-400" },
-                                        { icon: Globe2, title: "Distributors", sub: "Regional B2B wholesale network", color: "from-orange-500 to-amber-400" },
-                                        { icon: Pill, title: "Pharmacies", sub: "Verified retail pharmacy chains", color: "from-pink-500 to-rose-400" },
-                                        { icon: Sparkles, title: "NGOs", sub: "Global health organizations", color: "from-indigo-500 to-blue-500" },
-                                    ].map(({ icon: Icon, title, sub, color }, idx) => (
-                                        <div
-                                            key={title}
-                                            className={`group relative bg-slate-50 border border-transparent rounded-[2rem] p-8 overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:border-slate-200 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)] hover:bg-white ${idx % 2 !== 0 ? "sm:mt-12" : ""}`}
-                                        >
-                                            <div className={`absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b ${color} opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-l-[2rem]`} />
-                                            <div className="h-14 w-14 rounded-2xl bg-white border border-slate-200 text-slate-700 flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition-transform duration-300">
-                                                <Icon className="h-6 w-6" />
-                                            </div>
-                                            <h3 className="text-[20px] font-black text-slate-900 leading-tight mb-2">{title}</h3>
-                                            <p className="text-[14px] text-slate-500 font-medium">{sub}</p>
+                                    <div className="flex items-stretch gap-4">
+                                        <div className="flex-1 bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200 rounded-2xl p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+                                            <div className="text-[28px] font-black text-slate-900 leading-none mb-1">50+</div>
+                                            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Countries</div>
                                         </div>
-                                    ))}
+                                        <div className="flex-1 bg-gradient-to-br from-blue-600 via-blue-600 to-cyan-500/80 rounded-2xl p-5 shadow-[0_10px_35px_rgba(0,0,0,0.25),0_0_14px_rgba(34,211,238,0.18)]">
+                                            <div className="text-[28px] font-black text-white leading-none mb-1 drop-shadow-[0_0_6px_rgba(34,211,238,0.3)]">2000+</div>
+                                            <div className="text-[11px] font-bold text-blue-100 uppercase tracking-widest">Product SKUs</div>
+                                        </div>
+                                    </div>
                                 </div>
-
+                                <div className="lg:w-7/12 w-full">
+                                    <div className="relative rounded-[2rem] overflow-hidden h-[420px] md:h-[500px] shadow-[0_24px_60px_-12px_rgba(0,0,0,0.18)] group">
+                                        <img src="/main1.png" alt="Pharmaceutical warehouse operations" className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#060f1c]/80 via-[#060f1c]/20 to-transparent" />
+                                        <div className="absolute bottom-0 left-0 right-0 p-8">
+                                            <div className="text-[11px] font-black text-blue-300 uppercase tracking-[0.2em] mb-2">GDP-Certified Warehousing</div>
+                                            <h3 className="text-white font-black text-[20px] leading-tight mb-1">Temperature-Controlled Storage</h3>
+                                            <p className="text-slate-400 text-[13px] font-light">24/7 monitored cold-chain facilities — from 2–8°C biologics to ambient bulk storage.</p>
+                                        </div>
+                                        <div className="absolute top-5 left-5 flex items-center gap-2 bg-black/40 border border-white/20 rounded-full px-4 py-2">
+                                            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                                            <span className="text-[11px] font-bold text-white tracking-wide">Live Monitoring</span>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 mt-4">
+                                        <div className="relative rounded-[1.5rem] overflow-hidden h-[200px] shadow-md group">
+                                            <img src="/main2.png" alt="Quality control lab" className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-600 ease-out" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 to-transparent" />
+                                            <div className="absolute bottom-4 left-4 right-4">
+                                                <div className="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-0.5">QC Laboratory</div>
+                                                <div className="text-white font-bold text-[13.5px] leading-tight">Batch Testing & CoA Verification</div>
+                                            </div>
+                                        </div>
+                                        <div className="relative rounded-[1.5rem] overflow-hidden h-[200px] shadow-md group">
+                                            <img src="/main3.png" alt="Global logistics shipping" className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-600 ease-out" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 to-transparent" />
+                                            <div className="absolute bottom-4 left-4 right-4">
+                                                <div className="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-0.5">Global Logistics</div>
+                                                <div className="text-white font-bold text-[13.5px] leading-tight">50+ Countries, Zero Compromise</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -534,55 +671,33 @@ export default function HomePage() {
                 ══════════════════════════════════════ */}
                 <div ref={globalOps.ref}>
                     <section className="relative bg-[#060f1c] py-32 overflow-hidden">
-                        <div
-                            className="absolute inset-0 opacity-[0.18] pointer-events-none"
-                            style={{
-                                backgroundImage: "url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop')",
-                                backgroundSize: "cover",
-                                backgroundPosition: "center",
-                            }}
-                        />
+                        <div className="absolute inset-0 opacity-[0.28] pointer-events-none" style={{ backgroundImage: "url('/global.png')", backgroundSize: "cover", backgroundPosition: "center" }} />
                         <div className="noise-overlay" />
                         <div className="absolute inset-0 dot-grid opacity-50 pointer-events-none" />
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
-
-                        <div ref={orb1Ref} className="absolute left-[8%] top-[20%] w-40 h-40 bg-blue-500/10 blur-[60px] rounded-full pointer-events-none will-change-transform" />
-                        <div ref={orb2Ref} className="absolute right-[8%] bottom-[20%] w-52 h-52 bg-amber-600/10 blur-[80px] rounded-full pointer-events-none will-change-transform" />
-
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-blue-600/10 rounded-full blur-[90px] pointer-events-none" />
+                        <div className="absolute left-[8%] top-[20%] w-40 h-40 bg-blue-500/10 blur-[60px] rounded-full pointer-events-none" />
+                        <div className="absolute right-[8%] bottom-[20%] w-52 h-52 bg-amber-600/10 blur-[80px] rounded-full pointer-events-none" />
                         <div className="absolute left-[-2%] lg:left-[4%] top-1/2 -translate-y-1/2 w-72 h-72 hidden md:block pointer-events-none opacity-60">
                             <div className="absolute inset-0 border-[1.5px] border-dashed border-blue-400/50 rounded-full" />
-                            <div className=" absolute inset-8 border-[1.5px] border-dotted border-cyan-300/60 rounded-full" />
+                            <div className="absolute inset-8 border-[1.5px] border-dotted border-cyan-300/60 rounded-full" />
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-cyan-400 rounded-full shadow-[0_0_15px_rgba(34,211,238,1)]" />
                         </div>
-
                         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8">
                             <div className={`text-center mb-16 flex flex-col items-center rv ${globalOps.v ? "rs" : "rh"}`}>
                                 <SectionLabel centered onDark>Global Operations</SectionLabel>
-                                <h2
-                                    className="font-extrabold text-white mt-2 mb-4"
-                                    style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}
-                                >
-                                    Global Pharmaceutical Logistics
-                                </h2>
+                                <h2 className="font-extrabold text-white mt-2 mb-4" style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}>Global Pharmaceutical Logistics</h2>
                                 <p className="text-slate-400 max-w-2xl mx-auto text-[16px] leading-relaxed font-light">
-                                    Navigating complex international regulations and customs procedures. Our strategic supply routes
-                                    connect{" "}
-                                    <span className="text-blue-400 font-semibold">Europe, Asia, and the Americas</span>{" "}
-                                    with flawless execution.
+                                    Navigating complex international regulations and customs procedures. Our strategic supply routes connect{" "}
+                                    <span className="text-blue-400 font-semibold">Europe, Asia, and the Americas</span>{" "}with flawless execution.
                                 </p>
                             </div>
-
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-5xl mx-auto">
                                 {[
                                     { val: "50+", label: "Countries Served", icon: Globe2 },
                                     { val: "100%", label: "Cold-Chain Integrity", icon: Snowflake },
                                     { val: "24/7", label: "Customs Support", icon: Zap },
                                 ].map(({ val, label, icon }, i) => (
-                                    <div
-                                        key={label}
-                                        className={`rv ${globalOps.v ? "rs" : "rh"}`}
-                                        style={{ transitionDelay: `${i * 120}ms` }}
-                                    >
+                                    <div key={label} className={`rv ${globalOps.v ? "rs" : "rh"}`} style={{ transitionDelay: `${i * 120}ms` }}>
                                         <StatCard val={val} label={label} icon={icon} start={globalOps.v} />
                                     </div>
                                 ))}
@@ -598,37 +713,23 @@ export default function HomePage() {
                     <section className={`relative bg-white py-32 overflow-hidden border-t border-slate-200 rv ${quality.v ? "rs" : "rh"}`}>
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-blue-50 via-white to-white pointer-events-none" />
                         <div className="absolute inset-0 dot-grid-dark opacity-10" />
-
                         <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-8 text-center">
                             <div className="mb-20">
                                 <SectionLabel centered>Ready to Scale</SectionLabel>
-                                <h2
-                                    className="font-black text-slate-900 mb-6 mt-4 leading-tight"
-                                    style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)" }}
-                                >
+                                <h2 className="font-black text-slate-900 mb-6 mt-4 leading-tight" style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)" }}>
                                     Elevate Your{" "}
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
-                                        Supply Chain
-                                    </span>
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-blue-500 to-cyan-500">Supply Chain</span>
                                 </h2>
                                 <p className="text-slate-500 text-[18px] leading-relaxed max-w-2xl mx-auto font-light mb-10">
-                                    Join hundreds of healthcare institutions worldwide who trust our certified, reliable, and
-                                    temperature-controlled pharmaceutical distribution.
+                                    Join hundreds of healthcare institutions worldwide who trust our certified, reliable, and temperature-controlled pharmaceutical distribution.
                                 </p>
-                                <Link
-                                    to="/contact"
-                                    aria-label="Start sourcing smarter by contacting us"
-                                    className="shimmer inline-flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-2xl text-[16px] font-bold transition-all shadow-[0_10px_30px_rgba(37,99,235,0.2)] hover:shadow-[0_15px_40px_rgba(37,99,235,0.3)] hover:-translate-y-1"
-                                >
-                                    Start Sourcing Smarter
-                                    <ArrowRight className="h-5 w-5" />
+                                <Link to="/contact" aria-label="Start sourcing smarter by contacting us"
+                                    className="shimmer inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-400 to-blue-500 hover:bg-blue-500 text-white px-10 py-5 rounded-2xl text-[16px] font-bold transition-all shadow-[0_10px_30px_rgba(37,99,235,0.2)] hover:shadow-[0_15px_40px_rgba(37,99,235,0.3)] hover:-translate-y-1">
+                                    Start Sourcing Smarter <ArrowRight className="h-5 w-5" />
                                 </Link>
                             </div>
-
                             <div className="border-t border-slate-100 pt-16">
-                                <div className="text-[12px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-8">
-                                    Internationally Certified & Compliant
-                                </div>
+                                <div className="text-[12px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-8">Internationally Certified & Compliant</div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                     {[
                                         { code: "GDP Certified", desc: "Good Distribution" },
@@ -636,10 +737,7 @@ export default function HomePage() {
                                         { code: "ISO 9001:2015", desc: "Quality Management" },
                                         { code: "GMP Compliant", desc: "Manufacturing Stds." },
                                     ].map(({ code, desc }, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="group bg-slate-50 border border-slate-100 rounded-2xl p-6 flex flex-col items-center text-center hover:bg-white hover:border-blue-200 hover:shadow-[0_10px_30px_-10px_rgba(37,99,235,0.12)] transition-all duration-300"
-                                        >
+                                        <div key={idx} className="group bg-slate-50 border border-slate-100 rounded-2xl p-6 flex flex-col items-center text-center hover:bg-white hover:border-blue-200 hover:shadow-[0_10px_30px_-10px_rgba(37,99,235,0.12)] transition-all duration-300">
                                             <div className="h-14 w-14 rounded-full bg-blue-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                                                 <ShieldCheck className="h-7 w-7 text-blue-600" />
                                             </div>

@@ -131,13 +131,13 @@ export function Header() {
                                         key={href}
                                         to={href}
                                         className={`relative px-4 py-2 text-[13px] font-semibold rounded-full transition-all duration-300 ${active
-                                            ? "bg-slate-100 text-blue-600 shadow-sm"
-                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-500"
+                                            ? "bg-slate-100 text-blue-600 shadow-sm "
+                                            : "text-black hover:bg-slate-50 hover:text-slate-500"
                                             }`}
                                     >
                                         {label}
                                         {active && (
-                                            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 bg-blue-600 rounded-full" />
+                                            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-1 w-1 bg-blue-600 rounded-full" />
                                         )}
                                     </Link>
                                 );
@@ -148,12 +148,11 @@ export function Header() {
                         <div className="hidden lg:flex items-center gap-4 shrink-0 relative z-10">
                             <Link
                                 to="/contact"
-                                className="group relative inline-flex items-center gap-2 px-5 h-10 rounded-full text-[13px] font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-[0_4px_15px_rgb(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgb(37,99,235,0.4)] transition-all hover:-translate-y-0.5 overflow-hidden"
+                                className="shimmer-effect group relative inline-flex items-center gap-2 px-6 h-11 rounded-full text-[13px] font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_4px_15px_rgb(37,99,235,0.3)] transition-all hover:-translate-y-0.5 active:scale-95 overflow-hidden"
                             >
-                                {/* Shimmer sadece bu primary CTA'da */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] skew-x-[-20deg] group-hover:animate-[nav-shimmer_1.5s_infinite]" />
-                                Request Quote
-                                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+
+                                <span className="relative z-20">Request Quote</span>
+                                <ChevronRight className="h-4 w-4 relative z-20 transition-transform group-hover:translate-x-0.5" />
                             </Link>
                         </div>
 
@@ -201,10 +200,12 @@ export function Header() {
                         </button>
                     </div>
 
-                    <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                        <div className="text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase mb-4 px-2">
+                    <nav className=" flex-1 px-4 py-6 space-y-2 overflow-y-auto relative">
+                        {/* Başlık - relative ve z-20 ile shimmer'ın üstüne çıkardık */}
+                        <div className="relative z-20 text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase mb-4 px-2">
                             Navigation
                         </div>
+
                         {NAV_LINKS.map(({ label, href }) => {
                             const active = isActive(href);
                             return (
@@ -212,7 +213,8 @@ export function Header() {
                                     key={href}
                                     to={href}
                                     onClick={() => setOpen(false)}
-                                    className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-[15px] font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50"
+                                    /* Linklerin kendisini de relative ve z-20 yaparak shimmer'ın metni yutmasını önledik */
+                                    className={`relative z-20 flex items-center justify-between px-4 py-3.5 rounded-xl text-[15px] font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50"
                                         }`}
                                 >
                                     {label}
@@ -246,11 +248,7 @@ export function Header() {
             </div>
 
             {/* FIX: Keyframe ismi çakışmaları önlemek için yeniden adlandırıldı */}
-            <style>{`
-                @keyframes nav-shimmer {
-                    100% { transform: translateX(150%) skewX(-20deg); }
-                }
-            `}</style>
+
         </>
     );
 }

@@ -60,9 +60,12 @@
   }
 
   body {
-    @apply bg-background text-foreground;
 
-    font-family: 'DM Sans', system-ui, sans-serif;
+
+
+    font-family: 'DM Sans',
+      system-ui,
+      sans-serif;
     -moz-osx-font-smoothing: grayscale;
 
 
@@ -140,5 +143,102 @@
 
   .premium-glow:hover:before {
     opacity: .7;
+  }
+}
+
+
+@layer utilities {
+  .shimmer-effect {
+    position: relative;
+    overflow: hidden;
+    /* Butonun içindeki metinlerin kaybolmaması için */
+    isolation: isolate;
+
+  }
+
+  .shimmer-effect::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    /* Yazıların üstünden geçmesi için */
+    background: linear-gradient(105deg,
+        transparent 35%,
+        rgba(255, 255, 255, 0.3) 50%,
+        /* Görünürlüğü artırmak için 0.3 yaptık */
+        transparent 65%);
+    background-size: 200% 100%;
+    background-position: -200% center;
+    animation: global-shimmer 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    pointer-events: none;
+    /* Tıklamayı engellememesi için kritik */
+  }
+
+  @keyframes global-shimmer {
+    0% {
+      background-position: -200% center;
+    }
+
+    100% {
+      background-position: 200% center;
+    }
+  }
+}
+
+/* GLOBAL LOADER STYLES */
+#page-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: #06111e;
+  /* Sitenin ana koyu rengi */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+#page-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ov-logo {
+  position: absolute;
+  z-index: 10;
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.ov-ring {
+  width: 140px;
+  height: 140px;
+  border: 2px solid rgba(56, 189, 248, 0.1);
+  border-top-color: #38bdf8;
+  /* Curipharma mavisi */
+  border-radius: 50%;
+  animation: spin-ring 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+@keyframes spin-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
   }
 }

@@ -8,6 +8,7 @@ import {
 import { productService } from "@/services/productService";
 import { lookUpService } from "@/services/lookUpService";
 import { toast } from "react-toastify";
+import Lenis from "lenis";
 
 // ─────────────────────────────────────────────────────────────
 // TYPES
@@ -67,14 +68,10 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
         >
             {/* Image zone */}
             <div className="relative bg-gradient-to-b from-slate-50 to-white h-[180px] flex items-center justify-center overflow-hidden">
-                {/* Subtle grid texture */}
                 <div className="absolute inset-0 pc-img-grid opacity-50 pointer-events-none" />
-
-                {/* Category badge */}
                 <span className="absolute top-3 left-3 z-10 text-[9px] font-black uppercase tracking-[0.14em] text-slate-500 bg-white border border-slate-200/80 px-2 py-1 rounded-md shadow-sm">
                     {product.categoryName || "General"}
                 </span>
-
                 {product.imageUrl && !imgFailed ? (
                     <img
                         src={`${product.imageUrl}`}
@@ -88,14 +85,11 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
                         <Syringe className="h-10 w-10 text-slate-500" />
                     </div>
                 )}
-
-                {/* Hover shimmer sweep */}
                 <div className="pc-sweep absolute inset-0 pointer-events-none" />
             </div>
 
             {/* Content zone */}
             <div className="flex flex-col flex-1 p-5 border-t border-slate-100">
-                {/* Name */}
                 <div className="mb-4 flex-1">
                     <h3
                         className="text-[15.5px] font-black text-slate-900 leading-snug mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200"
@@ -109,8 +103,6 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
                         </p>
                     )}
                 </div>
-
-                {/* Specs */}
                 <dl className="border-t border-slate-100 pt-3.5 space-y-2">
                     {[
                         { label: "Specification", val: product.specification },
@@ -122,8 +114,6 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
                         </div>
                     ))}
                 </dl>
-
-                {/* CTA row */}
                 <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between">
                     <span className="text-[11px] text-slate-400 font-medium">Inquire for pricing</span>
                     <div className="flex items-center gap-1 text-[11.5px] font-bold text-blue-600 opacity-0 translate-x-[-4px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
@@ -131,8 +121,6 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
                     </div>
                 </div>
             </div>
-
-            {/* Bottom accent line */}
             <div className="h-[2px] w-full bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-hover:from-blue-400/60 group-hover:via-cyan-300/60 group-hover:to-blue-400/0 transition-all duration-500" />
         </Link>
     );
@@ -158,7 +146,7 @@ function SkeletonCard() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// CHECK ITEM (Blue 600 Fix)
+// CHECK ITEM
 // ─────────────────────────────────────────────────────────────
 function CheckItem({ id, name, selected, onToggle }: {
     id: number; name: string; selected: boolean; onToggle: (id: number) => void;
@@ -181,7 +169,7 @@ function CheckItem({ id, name, selected, onToggle }: {
 }
 
 // ─────────────────────────────────────────────────────────────
-// FILTER SECTION BLOCK (Blue 600 Badge Fix)
+// FILTER SECTION BLOCK
 // ─────────────────────────────────────────────────────────────
 function FilterSection({ icon: Icon, title, count, children }: {
     icon: React.ComponentType<{ className?: string }>;
@@ -226,14 +214,12 @@ function FilterPanel({ categories, dosageForms, selectedCategories, selectedForm
                         selected={selectedCategories.includes(c.id)} onToggle={onCategoryToggle} />
                 ))}
             </FilterSection>
-
             <FilterSection icon={Pill} title="Dosage Forms" count={selectedForms.length}>
                 {dosageForms.map(f => (
                     <CheckItem key={f.id} id={f.id} name={f.name}
                         selected={selectedForms.includes(f.id)} onToggle={onFormToggle} />
                 ))}
             </FilterSection>
-
             {activeCount > 0 && (
                 <button
                     onClick={onClear}
@@ -248,9 +234,18 @@ function FilterPanel({ categories, dosageForms, selectedCategories, selectedForm
 }
 
 // ─────────────────────────────────────────────────────────────
+// CONSTANTS FOR PARALLAX
+// ─────────────────────────────────────────────────────────────
+const PARALLAX_BG = 0.28;
+const PARALLAX_TXT = 0.12;
+
+// ─────────────────────────────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────
 export default function ProductsPage() {
+    const heroBgRef = useRef<HTMLDivElement>(null);
+    const heroContentRef = useRef<HTMLDivElement>(null);
+
     const [loading, setLoading] = useState(true);
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<LookupItem[]>([]);
@@ -260,16 +255,51 @@ export default function ProductsPage() {
     const [selectedForms, setSelectedForms] = useState<number[]>([]);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const searchRef = useRef<HTMLInputElement>(null);
-
-    // Load More Pagination State
     const [visibleCount, setVisibleCount] = useState(12);
 
     const debouncedQuery = useDebounce(searchQuery, 280);
 
-    // Reset pagination when filters or search change
+    // ── Lenis smooth scroll + Parallax ──
     useEffect(() => {
-        setVisibleCount(12);
-    }, [debouncedQuery, selectedCategories, selectedForms]);
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            orientation: "vertical",
+            smoothWheel: true,
+        });
+
+        // Setup global reference for drawer logic
+        (window as any).__lenis = lenis;
+
+        lenis.on("scroll", (e: { scroll: number }) => {
+            const sy = e.scroll;
+            if (heroBgRef.current) {
+                heroBgRef.current.style.transform = `translateY(${sy * PARALLAX_BG}px)`;
+            }
+            if (heroContentRef.current) {
+                heroContentRef.current.style.transform = `translateY(${sy * PARALLAX_TXT}px)`;
+            }
+        });
+
+        let rafId: number;
+        const raf = (t: number) => { lenis.raf(t); rafId = requestAnimationFrame(raf); };
+        rafId = requestAnimationFrame(raf);
+
+        return () => {
+            lenis.destroy();
+            cancelAnimationFrame(rafId);
+            delete (window as any).__lenis;
+        };
+    }, []);
+
+    // Drawer açıkken Lenis'i durdur (scroll arkada kaymasın)
+    useEffect(() => {
+        const lenis = (window as any).__lenis;
+        if (!lenis) return;
+        drawerOpen ? lenis.stop() : lenis.start();
+    }, [drawerOpen]);
+
+    useEffect(() => { setVisibleCount(12); }, [debouncedQuery, selectedCategories, selectedForms]);
 
     useEffect(() => {
         (async () => {
@@ -320,109 +350,91 @@ export default function ProductsPage() {
     return (
         <>
             <style>{`
-                /* Header pattern */
+                @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+                .anim-1 { animation: fadeUp 0.8s cubic-bezier(.16,1,.3,1) both 0.9s; }
+                .anim-2 { animation: fadeUp 0.8s cubic-bezier(.16,1,.3,1) both 1.05s; }
+                .anim-3 { animation: fadeUp 0.8s cubic-bezier(.16,1,.3,1) both 1.20s; }
+                .anim-4 { animation: fadeUp 0.8s cubic-bezier(.16,1,.3,1) both 1.35s; }
+
+                /* ── Hero grid ── */
                 .hero-grid {
                     background-image:
-                        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-                    background-size: 40px 40px;
+                        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+                    background-size: 44px 44px;
+                }
+                
+                /* ── Noise ── */
+                .noise {
+                    position: absolute; inset: 0; pointer-events: none; opacity: 0.028;
+                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
                 }
 
-                /* Card shimmer sweep on hover */
-                .pc-card {
-                    transition: transform 0.28s cubic-bezier(.16,1,.3,1),
-                                box-shadow 0.28s ease,
-                                border-color 0.2s ease;
-                }
-                .pc-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 16px 40px -10px rgba(37,99,235,0.13), 0 4px 12px -4px rgba(0,0,0,0.06);
-                    border-color: rgba(191,219,254,0.9);
-                }
-                .pc-img-grid {
-                    background-image: radial-gradient(circle, rgba(0,0,0,0.035) 1px, transparent 1px);
-                    background-size: 18px 18px;
-                }
-                .pc-sweep {
-                    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%);
-                    background-size: 200% 100%;
-                    background-position: -200% 0;
-                    transition: none;
-                }
-                .pc-card:hover .pc-sweep {
-                    background-position: 200% 0;
-                    transition: background-position 0.55s ease;
-                }
-
-                /* Card enter animation */
-                @keyframes cardEnter {
-                    from { opacity: 0; transform: translateY(12px); }
-                    to   { opacity: 1; transform: translateY(0); }
-                }
-                .pc-card { animation: cardEnter 0.4s cubic-bezier(.16,1,.3,1) both; }
-
-                /* Skeleton shimmer */
-                @keyframes shimmer {
-                    0%   { background-position: -200% 0; }
-                    100% { background-position:  200% 0; }
-                }
-                .skeleton {
-                    background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%);
-                    background-size: 200% 100%;
-                    animation: shimmer 1.5s ease-in-out infinite;
-                }
-
-                /* Drawer */
+                .pc-card { transition: all 0.28s cubic-bezier(.16,1,.3,1); animation: fadeUp 0.4s cubic-bezier(.16,1,.3,1) both; }
+                .pc-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px -10px rgba(37,99,235,0.13); border-color: rgba(191,219,254,0.9); }
+                .pc-img-grid { background-image: radial-gradient(circle, rgba(0,0,0,0.035) 1px, transparent 1px); background-size: 18px 18px; }
+                .pc-sweep { background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%); background-size: 200% 100%; background-position: -200% 0; }
+                .pc-card:hover .pc-sweep { background-position: 200% 0; transition: background-position 0.55s ease; }
+                .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite; }
+                @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
                 .drawer-backdrop { backdrop-filter: blur(8px); }
-                @keyframes drawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-                .drawer-panel { animation: drawerIn 0.3s cubic-bezier(.16,1,.3,1); }
-
-                /* Scrollbar in filter */
                 .filter-scroll::-webkit-scrollbar { width: 3px; }
-                .filter-scroll::-webkit-scrollbar-track { background: transparent; }
                 .filter-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
             `}</style>
 
             <div className="bg-[#f4f6f9] min-h-screen">
 
-                {/* ══════════════════════════════════════════
-                    HEADER
-                ══════════════════════════════════════════ */}
-                <div className="mt-8 relative bg-[#06111e] overflow-hidden">
-                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-600/0 via-blue-500 to-cyan-400/60" />
-                    <div className="absolute inset-0 hero-grid pointer-events-none" />
-                    <div className="absolute -top-20 left-1/3 w-[600px] h-[400px] bg-blue-700/15 rounded-full blur-[90px] pointer-events-none" />
-                    <div className="absolute bottom-0 right-1/4 w-[300px] h-[200px] bg-cyan-600/8 rounded-full blur-[60px] pointer-events-none" />
+                {/* ══════════════════════════════════════
+                    1. HERO
+                ══════════════════════════════════════ */}
+                <div className="mt-8 relative bg-[#06111e] overflow-hidden min-h-[40vh] flex flex-col justify-end">
 
-                    <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 pt-36 pb-28">
+                    {/* Parallax Background */}
+                    <div ref={heroBgRef} className="absolute inset-0 z-0" style={{ willChange: "transform" }}>
+                        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-600/0 via-blue-500 to-cyan-400/60 z-20" />
+
+                        {/* Background Image */}
+                        <img
+                            src="/productshero.jpg"
+                            alt="Product Catalog"
+                            className="absolute inset-0 w-full h-full object-cover opacity-40"
+                        />
+
+                        {/* Glows and Grids */}
+                        <div className="absolute inset-0 hero-grid pointer-events-none" />
+                        <div className="absolute -top-20 left-1/3 w-[600px] h-[400px] bg-blue-700/15 rounded-full blur-[90px] pointer-events-none" />
+                        <div className="absolute bottom-0 right-1/4 w-[300px] h-[200px] bg-cyan-600/8 rounded-full blur-[60px] pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#06111e]/70 to-[#06111e]" />
+                        <div className="noise" />
+                    </div>
+
+                    {/* Content */}
+                    <div ref={heroContentRef} className="relative z-10 max-w-7xl w-full mx-auto px-4 md:px-8 pt-36 pb-28" style={{ willChange: "transform" }}>
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
-
                             <div className="max-w-xl">
-                                <div className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-md bg-blue-500/10 border border-blue-500/20">
+                                <div className="anim-1 inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-md bg-blue-500/10 border border-blue-500/20">
                                     <Activity className="h-3 w-3 text-blue-400" />
                                     <span className="text-[10px] font-black tracking-[0.22em] uppercase text-blue-400">
                                         B2B Wholesale Catalog
                                     </span>
                                 </div>
-
                                 <h1
-                                    className="font-black text-white leading-[1.04] mb-4 tracking-tight"
+                                    className="anim-2 font-black text-white leading-[1.04] mb-4 tracking-tight"
                                     style={{ fontSize: "clamp(2.2rem, 4.5vw, 3.4rem)" }}
                                 >
                                     Product{" "}
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 font-black">
                                         Catalog
                                     </span>
                                 </h1>
-
-                                <p className="text-slate-400 text-[15px] font-light leading-[1.7] max-w-md">
+                                <p className="anim-3 text-slate-400 text-[15px] font-light leading-[1.7] max-w-md">
                                     GMP-certified pharmaceuticals sourced from verified global manufacturers.
                                     Use the filters to find exactly what you need.
                                 </p>
                             </div>
 
                             {!loading && (
-                                <div className="flex items-stretch gap-0 shrink-0 rounded-xl overflow-hidden bg-white/3 backdrop-blur-sm divide-x divide-white/8">
+                                <div className="anim-4 flex items-stretch gap-0 shrink-0 rounded-xl overflow-hidden bg-white/3 backdrop-blur-sm border border-white/10 divide-x divide-white/10">
                                     {[
                                         { n: products.length, label: "Products" },
                                         { n: categories.length, label: "Categories" },
@@ -438,18 +450,15 @@ export default function ProductsPage() {
                     </div>
                 </div>
 
-                {/* ══════════════════════════════════════════
-                    SEARCH BRIDGE
-                ══════════════════════════════════════════ */}
+                {/* ══ SEARCH BRIDGE ══ */}
                 <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-[26px] relative z-30">
                     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.12)] p-3 flex items-center gap-3">
-
                         <div className="relative flex-1">
                             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[15px] w-[15px] text-slate-400 pointer-events-none" />
                             <input
                                 ref={searchRef}
                                 type="text"
-                                aria-label="Search products by brand or generic name" // A11y Fix
+                                aria-label="Search products by brand or generic name"
                                 placeholder="Search by brand or generic name…"
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
@@ -492,9 +501,7 @@ export default function ProductsPage() {
                     </div>
                 </div>
 
-                {/* ══════════════════════════════════════════
-                    MAIN CONTENT
-                ══════════════════════════════════════════ */}
+                {/* ══ MAIN CONTENT ══ */}
                 <div className="max-w-7xl mx-auto px-4 md:px-8 pt-6 pb-24">
                     <div className="flex flex-col lg:flex-row gap-6 items-start">
 
@@ -526,13 +533,10 @@ export default function ProductsPage() {
                             ) : (
                                 <>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                                        {/* Pagination Fix: Sadece visibleCount kadarı render ediliyor */}
                                         {filteredProducts.slice(0, visibleCount).map((p, i) => (
                                             <ProductCard key={p.id} product={p} index={i} />
                                         ))}
                                     </div>
-
-                                    {/* Load More Button */}
                                     {visibleCount < filteredProducts.length && (
                                         <div className="flex justify-center mt-10">
                                             <button
@@ -549,9 +553,7 @@ export default function ProductsPage() {
                     </div>
                 </div>
 
-                {/* ══════════════════════════════════════════
-                    MOBILE DRAWER (Amber to Blue Fixes)
-                ══════════════════════════════════════════ */}
+                {/* ══ MOBILE DRAWER ══ */}
                 {drawerOpen && (
                     <div className="fixed inset-0 z-[600] lg:hidden">
                         <div
@@ -576,11 +578,9 @@ export default function ProductsPage() {
                                     <X className="h-4 w-4" />
                                 </button>
                             </div>
-
                             <div className="flex-1 overflow-y-auto p-4">
                                 <FilterPanel {...fp} />
                             </div>
-
                             <div className="p-4 bg-white border-t border-slate-100">
                                 <button
                                     onClick={() => setDrawerOpen(false)}
