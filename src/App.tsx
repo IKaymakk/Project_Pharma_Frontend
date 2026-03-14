@@ -5,6 +5,8 @@ import { PublicLayout } from '@/components/web/layout/PublicLayout'; // ✅ Yeni
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import HomePage from '@/pages/web/HomePage';
+import ProductsPage2 from './pages/web/ProductsPage';
+import AboutPage from './pages/web/About';
 function App() {
   return (
     <>
@@ -16,8 +18,8 @@ function App() {
             {/* Anasayfa */}
             <Route index element={<HomePage />} />
             {/* Diğer Alt Sayfalar (Şimdilik geçici) */}
-            <Route path="about" element={<div className="p-20 text-center text-xl">Kurumsal Sayfası</div>} />
-            <Route path="products" element={<div className="p-20 text-center text-xl">Ürünler Kataloğu</div>} />
+            <Route path="about" element={<AboutPage />} />
+            <Route path="products" element={<ProductsPage2 />} />
             <Route path="quality" element={<div className="p-20 text-center text-xl">Kalite (GMP) Sayfası</div>} />
             <Route path="contact" element={<div className="p-20 text-center text-xl">İletişim Sayfası</div>} />
           </Route>

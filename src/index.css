@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --border: 0 0% 89.8%;
@@ -61,8 +62,9 @@
   body {
     @apply bg-background text-foreground;
 
-    /* İŞTE PREMIUM AYARLAR: */
-    font-family: 'Inter', sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    -moz-osx-font-smoothing: grayscale;
+
 
     /* 1. Font Boyutunu 13px'e çekiyoruz (ERP Standardı) */
     font-size: 0.8125rem;
