@@ -10,6 +10,7 @@ import AboutPage from './pages/web/About';
 import QualityPage from './pages/web/QualityPage';
 import GlobalLoader from './components/shared/GlobalLoader';
 import Contact from './pages/web/Contact';
+import CertificatesPage from './pages/admin/Certificates';
 function App() {
   return (
     <>
@@ -33,6 +34,7 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<div>Dashboard (Özet Ekranı)</div>} />
             <Route path="products" element={<ProductsPage />} />
+            <Route path="certificates" element={<CertificatesPage />} />
             <Route path="users" element={<div>Kullanıcı Yönetimi</div>} />
             <Route path="settings" element={<div>Sistem Ayarları</div>} />
           </Route>

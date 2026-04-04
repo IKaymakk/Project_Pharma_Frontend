@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import {
     LayoutDashboard, Package, Users, Settings, LogOut,
-    Menu, ChevronLeft, ChevronRight, Bell, HelpCircle, Layers, Tablets
+    Menu, ChevronLeft, ChevronRight, Bell, HelpCircle, Layers, Tablets, Award
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,14 +15,13 @@ type SidebarItem =
     | { name: string; href: string; icon: LucideIcon; isModal?: never; modalKey?: never }
     | { name: string; href?: never; icon: LucideIcon; isModal: true; modalKey: string };
 
-// 1️⃣ LİSTEYE DOZAJ FORMUNU EKLEDİK
 const sidebarItems: SidebarItem[] = [
-    { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { name: "Ürün Yönetimi", href: "/admin/products", icon: Package },
-    { name: "Kategoriler", icon: Layers, isModal: true, modalKey: "category" },
-    { name: "Dozaj Formları", icon: Tablets, isModal: true, modalKey: "dosage" }, // ✅ YENİ EKLENDİ
-    { name: "Kullanıcılar", href: "/admin/users", icon: Users },
-    { name: "Ayarlar", href: "/admin/settings", icon: Settings },
+    { name: "Product Management", href: "/admin/products", icon: Package },
+    { name: "Certificates", href: "/admin/certificates", icon: Award },
+    { name: "Categories", icon: Layers, isModal: true, modalKey: "category" },
+    { name: "Dosage Forms", icon: Tablets, isModal: true, modalKey: "dosage" },
+    { name: "Users", href: "/admin/users", icon: Users },
+    { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export default function AdminLayout() {
@@ -33,10 +32,10 @@ export default function AdminLayout() {
     const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
     const [isDosageModalOpen, setDosageModalOpen] = useState(false);
 
-    // 2️⃣ HANDLER FONKSİYONUNU GÜNCELLEDİK
+    // Modal Handler
     const handleModalItem = (modalKey: string) => {
         if (modalKey === "category") setCategoryModalOpen(true);
-        if (modalKey === "dosage") setDosageModalOpen(true); // ✅ YENİ EKLENDİ
+        if (modalKey === "dosage") setDosageModalOpen(true);
     };
 
     return (
@@ -66,11 +65,11 @@ export default function AdminLayout() {
                 {/* MENÜ LABEL */}
                 {!collapsed && (
                     <div className="px-3 pt-3 pb-1">
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Navigasyon</span>
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Navigation</span>
                     </div>
                 )}
 
-                {/* NAV (BURASI OTOMATİK OLARAK YENİ BUTONU RENDER EDER) */}
+                {/* NAV */}
                 <nav className="flex-1 px-1.5 space-y-0.5 overflow-y-auto">
                     {sidebarItems.map((item) => {
                         const isActive = !item.isModal && (
@@ -142,7 +141,7 @@ export default function AdminLayout() {
                     >
                         {collapsed
                             ? <ChevronRight className="h-3 w-3" />
-                            : <><ChevronLeft className="h-3 w-3" /><span>Daralt</span></>
+                            : <><ChevronLeft className="h-3 w-3" /><span>Collapse</span></>
                         }
                     </Button>
 
@@ -155,7 +154,7 @@ export default function AdminLayout() {
                         )}
                     >
                         <LogOut className="h-3 w-3 shrink-0" />
-                        {!collapsed && "Çıkış Yap"}
+                        {!collapsed && "Logout"}
                     </Button>
                 </div>
             </aside>
@@ -169,20 +168,20 @@ export default function AdminLayout() {
                     <div className="ml-auto flex items-center gap-1">
                         <Button variant="ghost" size="icon"
                             className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded relative"
-                            title="Bildirimler">
+                            title="Notifications">
                             <Bell className="h-3.5 w-3.5" />
                             <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
                         </Button>
                         <Button variant="ghost" size="icon"
                             className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
-                            title="Yardım">
+                            title="Help">
                             <HelpCircle className="h-3.5 w-3.5" />
                         </Button>
                         <div className="w-px h-4 bg-slate-200 mx-1" />
                         <div className="flex items-center gap-2 pl-1 cursor-pointer group">
                             <div className="text-right hidden sm:block leading-none">
-                                <span className="block text-[11px] font-bold text-slate-700 group-hover:text-slate-900">İbrahim Bey</span>
-                                <span className="block text-[9px] text-slate-400">Yönetici</span>
+                                <span className="block text-[11px] font-bold text-slate-700 group-hover:text-slate-900">Ibrahim</span>
+                                <span className="block text-[9px] text-slate-400">Administrator</span>
                             </div>
                             <div className="h-7 w-7 rounded border border-slate-200 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-[10px] font-bold shadow-sm">
                                 IB
@@ -201,7 +200,6 @@ export default function AdminLayout() {
                 open={isCategoryModalOpen}
                 onOpenChange={setCategoryModalOpen}
             />
-            {/* 3️⃣ DOZAJ MODALINI RENDER ETTİK */}
             <DosageFormManagerDialog
                 open={isDosageModalOpen}
                 onOpenChange={setDosageModalOpen}

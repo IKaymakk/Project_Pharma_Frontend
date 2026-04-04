@@ -23,11 +23,11 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [search, setSearch] = useState("");
     const [editingId, setEditingId] = useState<number | null>(null);
+
     const filtered = products.filter(p =>
         !search ||
         p.BrandName?.toLowerCase().includes(search.toLowerCase()) ||
@@ -37,28 +37,29 @@ export default function ProductsPage() {
 
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
     const confirmDelete = async () => {
         if (!deleteId) return;
 
         setIsDeleting(true);
         try {
             await productService.delete(deleteId); // Backend: Soft Delete
-            toast.success("İşlem Başarılı", {
+            toast.success("Product deleted successfully", {
                 position: "top-right",
-                autoClose: 4000,
-            }); fetchProducts();
-        } catch (error) {
-
-            toast.error("Hata Oluştu", {
-                position: "top-right",
-                autoClose: 4000
+                autoClose: 3000,
             });
-
+            fetchProducts();
+        } catch (error) {
+            toast.error("Deletion failed", {
+                position: "top-right",
+                autoClose: 3000
+            });
         } finally {
             setIsDeleting(false);
             setDeleteId(null);
         }
     };
+
     const columns: ColumnDef<Product>[] = [
         {
             id: "rowNo",
@@ -70,21 +71,21 @@ export default function ProductsPage() {
         },
         {
             accessorKey: "BrandName",
-            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Marka Adı</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Brand Name</span>,
             cell: ({ row }) => (
                 <span className=" text-[11px] text-slate-800 leading-tight">{row.getValue("BrandName")}</span>
             ),
         },
         {
             accessorKey: "GenericName",
-            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Etken Madde</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Generic Name</span>,
             cell: ({ row }) => (
                 <span className="text-[11px] text-slate-600">{row.getValue("GenericName")}</span>
             ),
         },
         {
             accessorKey: "CategoryName",
-            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Kategori</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Category</span>,
             cell: ({ row }) => {
                 const val = row.getValue("CategoryName") as string;
                 return val ? (
@@ -103,7 +104,7 @@ export default function ProductsPage() {
         },
         {
             accessorKey: "Specification",
-            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Özellik</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Specification</span>,
             cell: ({ row }) => (
                 <span className="font-mono text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
                     {row.getValue("Specification") || "—"}
@@ -112,30 +113,31 @@ export default function ProductsPage() {
         },
         {
             id: "actions",
-            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider sr-only">İşlem</span>,
+            header: () => <span className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider sr-only">Actions</span>,
             cell: ({ row }) => (
                 <div className="flex justify-end items-center gap-0.5 opacity-1 group-hover:opacity-100 transition-opacity duration-100">
                     <Button variant="ghost" size="icon"
                         className="h-6 w-6 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                        title="Görüntüle">
+                        title="View">
                         <Eye className="h-3 w-3" />
                     </Button>
                     <Button variant="ghost" size="icon"
-                        className="..."
+                        className="h-6 w-6 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                        title="Edit"
                         onClick={() => setEditingId(row.original.Id)}
                     >
                         <Pencil className="h-3 w-3" />
                     </Button>
                     <Button variant="ghost" size="icon"
                         className="h-6 w-6 rounded text-slate-400 hover:text-red-600 hover:bg-red-50"
-                        title="Sil"
+                        title="Delete"
                         onClick={() => setDeleteId(row.original.Id)}
                     >
                         <Trash2 className="h-3 w-3" />
                     </Button>
                     <Button variant="ghost" size="icon"
                         className="h-6 w-6 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                        title="Daha Fazla">
+                        title="More">
                         <MoreHorizontal className="h-3 w-3" />
                     </Button>
                 </div>
@@ -146,25 +148,27 @@ export default function ProductsPage() {
 
     const fetchProducts = async () => {
         try {
-            const data = await productService.getAll("tr");
+            // ✅ SADECE İNGİLİZCE (en) VERİLER ÇEKİLİYOR
+            const data = await productService.getAll("en");
             setProducts(data);
         } catch {
-            toast.error("Veriler Yüklenemediz", { position: "top-right" });
-        }
-    };
-    const handleExport = async () => {
-        try {
-            await productService.exportToExcel("tr");
-            toast.success("Excel İndirildi", { position: "top-right" });
-        } catch {
-            toast.error("İndirme Başarısız", { position: "top-right" });
+            toast.error("Failed to load data", { position: "top-right" });
         }
     };
 
+    const handleExport = async () => {
+        try {
+            // ✅ EXCEL'E AKTARIM İNGİLİZCE
+            await productService.exportToExcel("en");
+            toast.success("Export successful", { position: "top-right" });
+        } catch {
+            toast.error("Export failed", { position: "top-right" });
+        }
+    };
 
     useEffect(() => { fetchProducts(); }, []);
 
-    /* ── KPI hesapları ── */
+    /* ── KPI calculations ── */
     const categories = new Set(products.map(p => p.CategoryName)).size;
     const brands = new Set(products.map(p => p.BrandName)).size;
 
@@ -173,11 +177,11 @@ export default function ProductsPage() {
 
             {/* ── BREADCRUMB ── */}
             <div className="flex items-center gap-1 px-4 py-1.5 bg-slate-50 border-b border-slate-200 text-[11px] text-slate-400 select-none">
-                <span className="hover:text-slate-600 cursor-pointer">Ana Sayfa</span>
+                <span className="hover:text-slate-600 cursor-pointer">Home</span>
                 <ChevronRight className="h-2.5 w-2.5" />
-                <span className="hover:text-slate-600 cursor-pointer">Stok Yönetimi</span>
+                <span className="hover:text-slate-600 cursor-pointer">Inventory</span>
                 <ChevronRight className="h-2.5 w-2.5" />
-                <span className="text-slate-700 font-medium">Ürün Listesi</span>
+                <span className="text-slate-700 font-medium">Products</span>
             </div>
 
             {/* ── PAGE HEADER ── */}
@@ -187,23 +191,22 @@ export default function ProductsPage() {
                         <Package className="h-3.5 w-3.5 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-[13px] font-bold text-slate-800 leading-none">Ürün Listesi</h1>
-                        <p className="text-[10px] text-slate-400 mt-0.5">Stok Yönetimi › Ürünler</p>
+                        <h1 className="text-[13px] font-bold text-slate-800 leading-none">Product List</h1>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Inventory › Products</p>
                     </div>
                 </div>
 
-                {/* Sağ aksiyonlar */}
+                {/* Right actions */}
                 <div className="flex items-center gap-1.5">
                     <Button variant="ghost" size="sm"
                         className="h-7 px-2.5 text-[11px] text-slate-500 hover:text-slate-700 hover:bg-slate-100"
                         onClick={fetchProducts}>
-                        <RefreshCw className="mr-1.5 h-3 w-3" /> Yenile
+                        <RefreshCw className="mr-1.5 h-3 w-3" /> Refresh
                     </Button>
                     <div className="w-px h-4 bg-slate-200" />
-                    <Button variant="ghost" size="sm" onClick={handleExport} className="...">
-                        <Download className="mr-1.5 h-3 w-3" /> Excel
+                    <Button variant="ghost" size="sm" onClick={handleExport} className="h-7 px-2.5 text-[11px] text-slate-500 hover:text-slate-700 hover:bg-slate-100">
+                        <Download className="mr-1.5 h-3 w-3" /> Export
                     </Button>
-                    {/* Modal Bileşeni - Butonu kendi içinde barındırır */}
                     <CreateProductDialog onSuccess={fetchProducts} />
                 </div>
             </div>
@@ -211,9 +214,9 @@ export default function ProductsPage() {
             {/* ── KPI BAR ── */}
             <div className="grid grid-cols-3 divide-x divide-slate-200 border-b border-slate-200 bg-white">
                 {[
-                    { label: "Toplam Ürün", value: products.length, icon: Package, color: "text-slate-700" },
-                    { label: "Kategori", value: categories, icon: Layers, color: "text-blue-600" },
-                    { label: "Marka", value: brands, icon: Tag, color: "text-violet-600" },
+                    { label: "Total Products", value: products.length, icon: Package, color: "text-slate-700" },
+                    { label: "Categories", value: categories, icon: Layers, color: "text-blue-600" },
+                    { label: "Brands", value: brands, icon: Tag, color: "text-violet-600" },
                 ].map(({ label, value, icon: Icon, color }) => (
                     <div key={label} className="flex items-center gap-2.5 px-4 py-2">
                         <Icon className={`h-4 w-4 ${color} shrink-0`} />
@@ -225,11 +228,9 @@ export default function ProductsPage() {
                 ))}
             </div>
 
-
-            {/* ── TABLO ── */}
+            {/* ── TABLE ── */}
             <div className="flex-1 overflow-auto bg-white">
                 <style>{`
-                    /* ERP tablo stili — zebra + hover + compact */
                     [data-erp-table] table { width: 100%; border-collapse: collapse; }
                     [data-erp-table] thead tr {
                         background: #f8fafc;
@@ -269,43 +270,45 @@ export default function ProductsPage() {
             <div className="flex items-center justify-between px-4 py-1.5 bg-slate-50 border-t border-slate-200 text-[10px] text-slate-400 select-none shrink-0">
                 <div className="flex items-center gap-3">
                     <span>
-                        <span className="font-semibold text-slate-600">{filtered.length}</span> kayıt gösteriliyor
-                        {search && <span className="ml-1">(toplam {products.length} kayıttan filtrelendi)</span>}
+                        Showing <span className="font-semibold text-slate-600">{filtered.length}</span> records
+                        {search && <span className="ml-1">(filtered from {products.length} total)</span>}
                     </span>
                     {search && (
                         <button
                             onClick={() => setSearch("")}
                             className="text-blue-500 hover:text-blue-700 underline"
                         >
-                            Filtreyi temizle
+                            Clear filter
                         </button>
                     )}
                 </div>
                 <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
                         <span className="h-1.5 w-1.5 rounded-full bg-green-400 inline-block" />
-                        Bağlı
+                        Connected
                     </span>
-                    <span>Son güncelleme: {new Date().toLocaleTimeString("tr-TR")}</span>
+                    <span>Last updated: {new Date().toLocaleTimeString("en-GB")}</span>
                 </div>
             </div>
+
             <EditProductDialog
                 productId={editingId}
                 open={!!editingId}
                 onOpenChange={(isOpen) => !isOpen && setEditingId(null)}
                 onSuccess={fetchProducts}
             />
+
             <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
                 <AlertDialogContent className="bg-white border-slate-200">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="text-slate-800">Ürünü silmek istediğinize emin misiniz?</AlertDialogTitle>
+                        <AlertDialogTitle className="text-slate-800">Are you sure you want to delete this product?</AlertDialogTitle>
                         <AlertDialogDescription className="text-slate-500 text-xs">
-                            Bu işlem ürünü listeden kaldıracak ve pasife çekecektir.
-                            Daha sonra sistem yöneticisi tarafından geri alınabilir.
+                            This action will remove the product from the list and mark it as inactive.
+                            It can be restored later by a system administrator.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="h-8 text-xs text-slate-500 border-slate-200 hover:bg-slate-50">Vazgeç</AlertDialogCancel>
+                        <AlertDialogCancel className="h-8 text-xs text-slate-500 border-slate-200 hover:bg-slate-50">Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={(e) => {
                                 e.preventDefault();
@@ -314,13 +317,11 @@ export default function ProductsPage() {
                             className="h-8 text-xs bg-red-600 hover:bg-red-700 text-white border-red-700"
                             disabled={isDeleting}
                         >
-                            {isDeleting ? "Siliniyor..." : "Evet, Sil"}
+                            {isDeleting ? "Deleting..." : "Yes, Delete"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
         </div>
-
     );
-
 }

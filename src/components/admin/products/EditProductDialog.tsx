@@ -5,16 +5,16 @@ import { createProductSchema, type ProductFormValues } from "@/schemas/productSc
 import { productService } from "@/services/productService";
 import { toast } from "react-toastify";
 import {
-    Dialog, DialogContent, DialogHeader, DialogTitle
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog";
 import {
-    Form, FormControl, FormField, FormItem, FormLabel, FormMessage // ✅ FormMessage import edilmişti, kullanıyoruz.
+    Form, FormControl, FormField, FormItem, FormLabel, FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Pencil, Save, Globe, Image as ImageIcon, Upload } from "lucide-react";
+import { Loader2, Pencil, Save, Image as ImageIcon, Upload } from "lucide-react";
 import { lookUpService } from "@/services/lookUpService";
 
 interface Props {
@@ -26,11 +26,10 @@ interface Props {
 
 export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: Props) {
     const [loading, setLoading] = useState(false);
-    const [currentLang, setCurrentLang] = useState("tr");
     const [categories, setCategories] = useState<any[]>([]);
     const [dosageForms, setDosageForms] = useState<any[]>([]);
 
-    // Resim State
+    // Image State
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,10 +48,11 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
             const fetchData = async () => {
                 setLoading(true);
                 try {
+                    // ✅ SABİT "en"
                     const [productData, catData, formData] = await Promise.all([
-                        productService.getById(productId, currentLang),
-                        lookUpService.getCategories(currentLang),
-                        lookUpService.getDosageForms(currentLang)
+                        productService.getById(productId, "en"),
+                        lookUpService.getCategories("en"),
+                        lookUpService.getDosageForms("en")
                     ]);
 
                     setCategories(catData);
@@ -75,14 +75,14 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
                     ); setSelectedFile(null);
 
                 } catch (error) {
-                    toast.error("Veriler Yüklenemedi");
+                    toast.error("Failed to load data");
                 } finally {
                     setLoading(false);
                 }
             };
             fetchData();
         }
-    }, [open, productId, currentLang, form]);
+    }, [open, productId, form]);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -101,7 +101,7 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
 
         try {
             const updateData = {
-                languageCode: currentLang,
+                languageCode: "en", // ✅ SABİT "en"
                 categoryId: values.categoryId,
                 dosageFormId: values.dosageFormId,
                 specification: values.specification,
@@ -114,12 +114,12 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
 
             await productService.update(productId, updateData);
 
-            toast.success("Güncelleme Başarılı", { position: "top-right", autoClose: 2000 });
+            toast.success("Updated Successfully", { position: "top-right", autoClose: 2000 });
             onOpenChange(false);
             onSuccess();
         } catch (error) {
-            console.error("Update Hatası:", error);
-            toast.error("Güncelleme Başarısız");
+            console.error("Update Error:", error);
+            toast.error("Update Failed");
         }
     };
 
@@ -131,7 +131,7 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
                         <div className="h-6 w-6 rounded bg-orange-100 text-orange-600 flex items-center justify-center">
                             <Pencil className="h-3.5 w-3.5" />
                         </div>
-                        Ürün Düzenle #{productId}
+                        Edit Product #{productId}
                     </DialogTitle>
                 </DialogHeader>
 
@@ -141,22 +141,8 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
                     </div>
                 ) : (
                     <Form {...form}>
-                        <div className="px-6 py-2 bg-slate-50 border-b border-slate-100 flex justify-end">
-                            <div className="flex items-center gap-2">
-                                <Globe className="h-3.5 w-3.5 text-slate-400" />
-                                <Select value={currentLang} onValueChange={setCurrentLang}>
-                                    <SelectTrigger className="h-7 w-32 text-xs bg-white border-slate-200"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="tr" className="text-xs">🇹🇷 Türkçe</SelectItem>
-                                        <SelectItem value="en" className="text-xs">🇺🇸 English</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
                         <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 space-y-4">
-
-                            {/* RESİM ALANI */}
+                            {/* IMAGE UPLOAD */}
                             <div className="flex gap-4 items-start p-3 bg-slate-50/50 rounded border border-slate-100">
                                 <div
                                     className="h-20 w-20 rounded border border-slate-200 bg-white flex items-center justify-center overflow-hidden cursor-pointer hover:border-orange-400 transition-colors shrink-0 relative group"
@@ -164,7 +150,7 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
                                 >
                                     {previewUrl ? (
                                         <>
-                                            <img src={previewUrl} alt="Önizleme" className="h-full w-full object-cover" />
+                                            <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
                                             <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Upload className="h-4 w-4 text-white" />
                                             </div>
@@ -183,28 +169,28 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
                                 />
 
                                 <div className="flex-1">
-                                    <h4 className="text-xs font-semibold text-slate-700">Ürün Görseli</h4>
+                                    <h4 className="text-xs font-semibold text-slate-700">Product Image</h4>
                                     <p className="text-[10px] text-slate-500 mb-2">Max 2MB. JPG/PNG.</p>
                                     <Button type="button" variant="outline" size="sm" onClick={triggerFileInput} className="h-6 text-[10px] bg-white">
-                                        Dosya Seç
+                                        Choose File
                                     </Button>
                                 </div>
                             </div>
 
-                            {/* INPUTLAR */}
+                            {/* INPUTS */}
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField control={form.control} name="brandName" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Marka</FormLabel>
+                                        <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Brand Name</FormLabel>
                                         <FormControl><Input {...field} className="h-8 text-xs" /></FormControl>
-                                        <FormMessage className="text-[10px] text-red-500" /> {/* ✅ Eklendi */}
+                                        <FormMessage className="text-[10px] text-red-500" />
                                     </FormItem>
                                 )} />
                                 <FormField control={form.control} name="genericName" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Etken Madde</FormLabel>
+                                        <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Generic Name</FormLabel>
                                         <FormControl><Input {...field} className="h-8 text-xs" /></FormControl>
-                                        <FormMessage className="text-[10px] text-red-500" /> {/* ✅ Eklendi */}
+                                        <FormMessage className="text-[10px] text-red-500" />
                                     </FormItem>
                                 )} />
                             </div>
@@ -212,58 +198,80 @@ export function EditProductDialog({ productId, open, onOpenChange, onSuccess }: 
                             <div className="grid grid-cols-3 gap-4">
                                 <FormField control={form.control} name="categoryId" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Kategori</FormLabel>
+                                        <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Category</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Seçiniz" /></SelectTrigger></FormControl>
+                                            <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                                             <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id.toString()} className="text-xs">{c.name || c.Name}</SelectItem>)}</SelectContent>
                                         </Select>
-                                        <FormMessage className="text-[10px] text-red-500" /> {/* ✅ Eklendi */}
+                                        <FormMessage className="text-[10px] text-red-500" />
                                     </FormItem>
                                 )} />
                                 <FormField control={form.control} name="dosageFormId" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Form</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Seçiniz" /></SelectTrigger></FormControl>
+                                            <FormControl><SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                                             <SelectContent>{dosageForms.map(f => <SelectItem key={f.id} value={f.id.toString()} className="text-xs">{f.name || f.Name}</SelectItem>)}</SelectContent>
                                         </Select>
-                                        <FormMessage className="text-[10px] text-red-500" /> {/* ✅ Eklendi */}
+                                        <FormMessage className="text-[10px] text-red-500" />
                                     </FormItem>
                                 )} />
                                 <FormField control={form.control} name="specification" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Özellik</FormLabel>
+                                        <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Specification</FormLabel>
                                         <FormControl><Input {...field} className="h-8 text-xs" /></FormControl>
-                                        <FormMessage className="text-[10px] text-red-500" /> {/* ✅ Eklendi */}
+                                        <FormMessage className="text-[10px] text-red-500" />
                                     </FormItem>
                                 )} />
                             </div>
 
+                            <FormField control={form.control} name="imageUrl" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">
+                                        Image URL <span className="text-slate-300 normal-case font-normal">(Optional)</span>
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            className={`h-8 text-xs bg-slate-50 ${form.formState.errors.imageUrl ? "border-red-500 focus-visible:ring-red-500" : "border-slate-200"}`}
+                                            placeholder="https://example.com/image.jpg"
+                                        />
+                                    </FormControl>
+                                    <FormMessage className="text-[10px] text-red-500 font-medium" />
+                                </FormItem>
+                            )} />
+
                             <FormField control={form.control} name="indication" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Endikasyon</FormLabel>
+                                    <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">
+                                        Indication <span className="text-red-500">*</span>
+                                    </FormLabel>
                                     <FormControl>
-                                        <Textarea {...field} className="min-h-[40px] text-xs resize-none" placeholder="Kullanım alanı..." />
+                                        <Textarea
+                                            {...field}
+                                            className={`min-h-[40px] text-xs bg-slate-50 ${form.formState.errors.indication ? "border-red-500 focus-visible:ring-red-500" : "border-slate-200"} resize-none`}
+                                            placeholder="e.g: Pain relief, fever..."
+                                        />
                                     </FormControl>
-                                    <FormMessage className="text-[10px] text-red-500" /> {/* ✅ Eklendi */}
+                                    <FormMessage className="text-[10px] text-red-500 font-medium" />
                                 </FormItem>
                             )} />
 
                             <FormField control={form.control} name="description" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Açıklama</FormLabel>
-                                    <FormControl><Textarea {...field} className="min-h-[60px] text-xs resize-none" /></FormControl>
-                                    <FormMessage className="text-[10px] text-red-500" /> {/* ✅ Eklendi */}
+                                    <FormLabel className="text-[11px] font-semibold text-slate-500 uppercase">Description</FormLabel>
+                                    <FormControl><Textarea {...field} className="min-h-[60px] text-xs bg-slate-50 border-slate-200 resize-none" /></FormControl>
+                                    <FormMessage className="text-[10px] text-red-500" />
                                 </FormItem>
                             )} />
 
-                            <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-                                <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="h-8 text-xs text-slate-500">İptal</Button>
+                            <DialogFooter className="pt-4 border-t border-slate-100">
+                                <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="h-8 text-xs text-slate-500">Cancel</Button>
                                 <Button type="submit" size="sm" className="h-8 text-xs bg-orange-600 hover:bg-orange-700 text-white" disabled={form.formState.isSubmitting}>
                                     {form.formState.isSubmitting ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <Save className="mr-2 h-3 w-3" />}
-                                    Güncelle
+                                    Update
                                 </Button>
-                            </div>
+                            </DialogFooter>
                         </form>
                     </Form>
                 )}
